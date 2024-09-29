@@ -1,3 +1,11 @@
 .env
 usr
-.vscode
+/reports
+/screenshots
+build/bin
+node_modules
+frontend/build
+*.d.ts
+frontend/src/lib/wailsjs
+build
+sqlite.db

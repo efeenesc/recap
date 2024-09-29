@@ -2,15 +2,11 @@ package ollama
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"os"
-	"path"
-	"rcallport/internal/config"
+	"rcallport/internal/utils"
 	"strings"
 	"sync"
 	"time"
@@ -95,7 +91,7 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 func sendToOllama(client *http.Client, modelName string, fileName *string, prompt string) (string, error) {
 	var images []string
 	if fileName != nil {
-		imageBase64 := readImageToBase64(*fileName)
+		imageBase64 := utils.ReadImageToBase64(*fileName)
 		if imageBase64 == "" {
 			return "", fmt.Errorf("failed to read image file")
 		}
@@ -131,19 +127,6 @@ func sendToOllama(client *http.Client, modelName string, fileName *string, promp
 	}
 
 	return ollamaResponse.Response, nil
-}
-
-func readImageToBase64(fileName string) string {
-	proot, _ := config.GetProjectRoot()
-	fullPath := path.Join(proot, config.Config.System.ScreenshotPath, fileName)
-
-	bytes, err := os.ReadFile(fullPath)
-	if err != nil {
-		log.Printf("Error reading image file: %v", err)
-		return ""
-	}
-
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(bytes)
 }
 
 func (a *AIModel) generateClient() *http.Client {

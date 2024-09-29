@@ -1,8 +1,8 @@
 database:
-  path: ./usr/sqlite3.db
+  path: ./sqlite.db
 system:
-  report_path: ./usr/reports
-  screenshot_path: ./usr/screenshots
+  report_path: ./reports
+  screenshot_path: ./screenshots
 llm:
   screenshot:
     api:

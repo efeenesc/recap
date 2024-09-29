@@ -3,6 +3,7 @@ package schedule
 import (
 	"fmt"
 	"log"
+	"rcallport/internal/app"
 	"rcallport/internal/config"
 	"rcallport/internal/db"
 	"rcallport/internal/llm"
@@ -10,8 +11,37 @@ import (
 	"time"
 )
 
-var ScrTimer *time.Ticker
-var LLMTimer *time.Ticker
+type Timer struct {
+	ticker  *time.Ticker
+	running bool
+}
+
+var (
+	screenshotTimer = &Timer{}
+	llmTimer        = &Timer{}
+)
+
+func (t *Timer) start(interval time.Duration, callback func()) {
+	t.stop()
+	t.ticker = time.NewTicker(interval)
+	t.running = true
+	go func() {
+		for {
+			<-t.ticker.C
+			if !t.running {
+				return
+			}
+			callback()
+		}
+	}()
+}
+
+func (t *Timer) stop() {
+	if t.ticker != nil {
+		t.ticker.Stop()
+		t.running = false
+	}
+}
 
 func screenshotCallback() {
 	fmt.Printf("Taking screenshot at %s\n", time.Now())
@@ -20,59 +50,70 @@ func screenshotCallback() {
 	if err != nil {
 		log.Fatalf("Could not create database connection! %v\n", err.Error())
 	}
-	db.InsertCapture(cl, []string{fileName})
+	lastId := db.InsertCapture(cl, []string{fileName})
+	app.AppInstance.SendScreenshotRanMessage(lastId)
 }
 
-func startScreenshotTimer(minInterval int) {
-	ScrTimer = time.NewTicker(time.Duration(minInterval) * time.Minute)
-	go func() {
-		for {
-			<-ScrTimer.C
-			screenshotCallback()
-		}
-	}()
-}
-
-func startLLMTimer(minInterval int) {
+func llmCallback() {
+	fmt.Printf("Sending queued screenshots to LLM at %s\n", time.Now())
 	llm.SendQueue()
-	LLMTimer = time.NewTicker(time.Duration(minInterval) * time.Minute)
-	go func() {
-		for {
-			<-LLMTimer.C
-			fmt.Printf("Sending queued screenshots to LLM at %s\n", time.Now())
-			llm.SendQueue()
-		}
-	}()
 }
 
-// Returns total minutes
-func getFullIntervalTime(hrs *int, mins *int) int {
-	var totalMins = 0
+func StartScreenshotSchedule(interval time.Duration) {
+	fmt.Println("Starting screenshot schedule")
+	screenshotTimer.start(interval, screenshotCallback)
+}
 
-	if hrs != nil {
-		totalMins += *hrs * 60
-	}
-	if mins != nil {
-		totalMins += *mins
-	}
+func StartLLMTimer(interval time.Duration) {
+	llmTimer.start(interval, llmCallback)
+}
 
-	return totalMins
+func SetLLMScheduleState(state bool) {
+	if state {
+		StartLLMTimer(getDefaultInterval(120))
+	} else {
+		llmTimer.stop()
+	}
+}
+
+func SetScrScheduleState(state bool) {
+	if state {
+		StartScreenshotSchedule(getDefaultInterval(5))
+	} else {
+		screenshotTimer.stop()
+	}
+}
+
+func AreTimersRunning() (bool, bool) {
+	return screenshotTimer.running, llmTimer.running
 }
 
 func Initialize() {
-	ssGenObj := config.Config.LLM.Screenshot.DescriptionGenInterval
 	ssTakeObj := config.Config.LLM.Screenshot.ScreenshotInterval
+	ssGenObj := config.Config.LLM.Screenshot.DescriptionGenInterval
 
-	totalMins := getFullIntervalTime(ssTakeObj.Hours, ssTakeObj.Minutes)
-	if totalMins != 0 {
-		startScreenshotTimer(totalMins)
+	if interval := getDuration(ssTakeObj.Hours, ssTakeObj.Minutes); interval > 0 {
+		StartScreenshotSchedule(interval)
 	}
 
 	if ssGenObj.Enabled {
-		totalMins = getFullIntervalTime(ssGenObj.Hours, ssGenObj.Minutes)
-
-		if totalMins != 0 {
-			startLLMTimer(totalMins)
+		if interval := getDuration(ssGenObj.Hours, ssGenObj.Minutes); interval > 0 {
+			StartLLMTimer(interval)
 		}
 	}
+}
+
+func getDuration(hours, minutes *int) time.Duration {
+	var totalMinutes int
+	if hours != nil {
+		totalMinutes += *hours * 60
+	}
+	if minutes != nil {
+		totalMinutes += *minutes
+	}
+	return time.Duration(totalMinutes) * time.Minute
+}
+
+func getDefaultInterval(minutes int) time.Duration {
+	return time.Duration(minutes) * time.Minute
 }

@@ -45,6 +45,13 @@ type AppConfig struct {
 	} `yaml:"llm"`
 }
 
+func createFolderIfNotExists(path string) {
+	_, err := os.Stat(path)
+	if err != nil {
+		os.Mkdir(path, 0700)
+	}
+}
+
 func Initialize() {
 	proot, _ := GetProjectRoot()
 
@@ -67,6 +74,9 @@ func Initialize() {
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
+
+		createFolderIfNotExists(path.Join(proot, Config.System.ReportPath))
+		createFolderIfNotExists(path.Join(proot, Config.System.ScreenshotPath))
 		break
 	}
 

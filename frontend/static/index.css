@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    font-family: "Inter";
+}
+
+body {
+    overflow: hidden;
+    margin: 0;
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400;
+    src: local(""), url("InterVariable.ttf") format("truetype");
+}
+
+/* ::view-transition-old(root) {
+    animation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+        300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(root) {
+    animation: 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+        300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+} */
+
+/* ::view-transition-old(.side_panel)
+::view-transition-new(.side_panel)
+::view-transition-old(.transition-box-content)
+::view-transition-new(.transition-box-content)
+::view-transition-old(.transition-box-container)
+::view-transition-new(.transition-box-container) {
+    animation: none;
+} */
+
+:root::view-transition-old(*),
+:root::view-transition-new(*) {
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 100%;
+    block-size: auto;
+
+    animation-duration: inherit;
+    animation-fill-mode: inherit;
+    animation-delay: inherit;
+}
+
+/* Keyframes for blending when there are 2 images */
+@keyframes -ua-mix-blend-mode-plus-lighter {
+    from {
+        mix-blend-mode: overlay;
+    }
+    to {
+        mix-blend-mode: overlay;
+    }
+}
+
+@keyframes -ua-view-transition-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+::view-transition-old(:root)
+::view-transition-new(:root)
+::view-transition-old(.page-container)
+::view-transition-new(.page-container)
+::view-transition-old(*)
+::view-transition-new(*) {
+    animation: none;
+}
+
+::view-transition-old(.page-title)
+::view-transition-new(.page-title)
+::view-transition-old(.transition-box-container)
+::view-transition-new(.transition-box-container)
+::view-transition-old(.transition-box-content)
+::view-transition-new(.transition-box-content) {
+    animation: -ua-mix-blend-mode-plus-lighter;
+}
+
+.page-title {
+    view-transition-name: page-title;
+}
+
+.transition-box-container {
+    view-transition-name: transition-box-container;
+}
+
+.transition-box-content {
+    view-transition-name: transition-box-content;
+}
