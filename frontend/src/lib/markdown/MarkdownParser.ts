@@ -107,7 +107,6 @@ export function lex(mdstr: string): string[][] {
         return processedTokens;
     });
 
-    console.log(result);
     return result;
 }
 
@@ -256,7 +255,6 @@ export function parse(l: string[][]): MdNode {
         }
     }
 
-    console.log(rootNode);
     return rootNode;
 }
 

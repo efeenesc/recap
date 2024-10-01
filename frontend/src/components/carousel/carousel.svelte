@@ -26,7 +26,6 @@
       maxLeft: -(contentDiv.clientWidth * 0.82),
       maxRight: 0
     }
-    // console.log('Bounds:', carouselBounds);
   }
 
   function clearMousePosition() {

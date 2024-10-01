@@ -7,33 +7,40 @@
     import { get, writable } from "svelte/store";
     import Checkmark from "../../icons/Checkmark.svelte";
     import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
-    import { addScreenshotToStore } from "../../utils/screenshot.ts";
+    import {
+        addScreenshotToStore,
+        getScreenshotsNewerThan,
+        getScreenshotsOlderThan,
+    } from "../../utils/screenshot.ts";
     import { dialogStore } from "$lib/stores/DialogStore.ts";
     import { GenerateReportFromScreenshotIds } from "$lib/wailsjs/go/app/AppMethods.js";
     import { addNewDialog } from "../../utils/dialog.ts";
+    import { screenshotStore } from "$lib/stores/ScreenshotStore.ts";
 
     interface Data {
         streamed: {
-            items: Promise<DatedScreenshot | undefined>;
+            items: {
+                subscribe: (run: (value: DatedScreenshot) => void) => () => void;
+            };
         };
     }
 
     let title: HTMLDivElement;
+    let loadMoreDiv: Element;
+    let loadMoreDivObserver: IntersectionObserver;
     let prevId: number | undefined;
     let selecting: boolean = false;
     const rcvScr = writable<DatedScreenshot | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
     export let data: Data;
 
-    async function getData(): Promise<DatedScreenshot | undefined> {
-        try {
-            const items = await data.streamed.items;
-            rcvScr.set(items);
-            return items;
-        } catch (err) {
-            console.error(err);
-            throw err;
-        }
+    async function getData(): Promise<DatedScreenshot> {
+        return new Promise((resolve) => {
+            data.streamed.items.subscribe((items) => {
+                rcvScr.set(items);
+                resolve(items);
+            });
+        });
     }
 
     async function animateLoad(id: string) {
@@ -52,9 +59,30 @@
         });
     }
 
+    async function addNewScreenshots() {
+        let newestKnown = 0;
+        const allScr = get(rcvScr);
+
+        if (allScr) {
+            const newestKey = Object.keys(allScr)[0];
+            allScr[newestKey].forEach((scr) => {
+                if (scr.CaptureID > newestKnown) newestKnown = scr.CaptureID;
+            });
+        }
+
+        const newScreenshots = await getScreenshotsNewerThan(newestKnown);
+        if (!newScreenshots) return;
+
+        screenshotStore.update((prev) => {
+            if (!prev) return prev;
+
+            return [...newScreenshots, ...prev];
+        });
+    }
+
     function subscribeToScreenshotEvent() {
         EventsOn("rcv:screenshotran", async (lastId) => {
-            await addScreenshotToStore(lastId);
+            addNewScreenshots();
             addNewDialog({
                 title: "New item added",
                 description: `New screenshot ID: ${lastId}`,
@@ -62,24 +90,69 @@
         });
     }
 
+    async function getOlderScreenshots() {
+        console.log("Getting older screenshots");
+        let oldestKnownId: number | undefined;
+        const allScreenshots = get(rcvScr);
+
+        if (allScreenshots && typeof allScreenshots === "object") {
+            const screenshotArrays = Object.values(allScreenshots);
+            if (screenshotArrays.length > 0) {
+                const flatScreenshots = screenshotArrays.flat();
+                oldestKnownId = Math.min(
+                    ...flatScreenshots.map((scr) => scr.CaptureID)
+                );
+            }
+        }
+
+        if (oldestKnownId === undefined) {
+            console.log("No existing screenshots found");
+            return;
+        }
+
+        try {
+            const newScreenshots = await getScreenshotsOlderThan(
+                oldestKnownId,
+                30
+            );
+            console.log("New screenshots retrieved:", newScreenshots);
+
+            screenshotStore.update((prev) => {
+                if (!Array.isArray(prev)) return newScreenshots;
+                return [...prev, ...newScreenshots];
+            });
+        } catch (error) {
+            console.error("Error fetching older screenshots:", error);
+        }
+    }
+
     onDestroy(() => {
         EventsOff("rcv:screenshotran");
     });
 
     onMount(() => {
-        subscribeToScreenshotEvent();
-
-        const observer = new IntersectionObserver(
-            (asd) => {
-                console.log(asd);
+        loadMoreDivObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        console.log("YOOO");
+                        getOlderScreenshots();
+                    }
+                });
             },
-            {
-                rootMargin: "-1px 0px 0px 0px",
-                threshold: [1],
-            }
-        );
+            { threshold: 0.1 }
+        ); // Trigger when 10% of the element is visible
 
-        observer.observe(title);
+        subscribeToScreenshotEvent();
+    });
+
+    $: if (loadMoreDiv) {
+        loadMoreDivObserver.observe(loadMoreDiv);
+    }
+
+    onDestroy(() => {
+        loadMoreDivObserver.unobserve(loadMoreDiv);
+        loadMoreDivObserver.disconnect();
     });
 
     function selectAllFromDate(event: any, date: string) {
@@ -222,19 +295,16 @@
             })
         );
 
-        console.log(selectedIds);
-
         try {
             const reportId: number | undefined =
                 await GenerateReportFromScreenshotIds(selectedIds);
 
-            console.log(reportId);
             if (!reportId) throw "No report ID was found";
             addNewDialog({
                 title: "Report generated",
                 description: `A new report was generated!`,
-                buttonLink: `/reports/${reportId}`,
-                buttonLinkDescription: "Open report",
+                primaryButtonCallback: () => goto(`/reports/${reportId}`),
+                primaryButtonName: "Open report",
             });
         } catch (err) {
             console.error(err);
@@ -346,12 +416,17 @@
                                             loading="lazy"
                                             src={s.Screenshot}
                                         />
+
+                                        <h3 class="flex-shrink-0 pt-1 pl-2">
+                                            {s.Time}
+                                        </h3>
                                     </div>
                                 </div>
                             {/each}
                         </div>
                     </div>
                 {/each}
+                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
             {:else}
                 No screenshots available.
             {/if}

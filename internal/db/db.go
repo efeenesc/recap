@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"path"
 	"rcallport/internal/config"
@@ -9,9 +10,25 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var Initializers InitializerCallbacks
+
+type InitializerCallbacks struct {
+	FunctionsGiven bool
+	InitSchedule   func()
+	InitLLM        func()
+}
+
+func NewInitializers() *InitializerCallbacks {
+	return &InitializerCallbacks{}
+}
+
 func createTable(db *sql.DB) error {
 	capturesStmt := `
-	create table captures (capture_id integer not null primary key, r_id integer, timestamp integer not null)
+	CREATE TABLE captures (
+		capture_id INTEGER NOT NULL PRIMARY KEY, 
+		r_id INTEGER, 
+		timestamp INTEGER NOT NULL
+	);
 	`
 	_, err := db.Exec(capturesStmt)
 	if err != nil {
@@ -19,7 +36,14 @@ func createTable(db *sql.DB) error {
 	}
 
 	screenshotsStmt := `
-	create table screenshots (screenshot_id integer not null primary key, capt_id integer not null, filename text, description text, FOREIGN KEY(capt_id) REFERENCES captures(capture_id))
+	CREATE TABLE screenshots (
+		screenshot_id INTEGER NOT NULL PRIMARY KEY, 
+		capt_id INTEGER NOT NULL,
+		filename TEXT, 
+		thumbname TEXT, 
+		description TEXT, 
+		FOREIGN KEY(capt_id) REFERENCES captures(capture_id)
+	);
 	`
 
 	_, err = db.Exec(screenshotsStmt)
@@ -28,7 +52,11 @@ func createTable(db *sql.DB) error {
 	}
 
 	dailyReportsStmt := `
-	create table dailyreports (report_id integer not null primary key, timestamp integer not null, content text)
+	CREATE TABLE dailyreports (
+		report_id INTEGER NOT NULL PRIMARY KEY,
+		timestamp INTEGER NOT NULL,
+		content TEXT
+	);
 	`
 
 	_, err = db.Exec(dailyReportsStmt)
@@ -38,8 +66,7 @@ func createTable(db *sql.DB) error {
 
 	settingsStmt := `
 		CREATE TABLE settings (
-			id INTEGER PRIMARY KEY,
-			key TEXT UNIQUE NOT NULL,
+			key TEXT PRIMARY KEY UNIQUE NOT NULL,
 			value TEXT NOT NULL
 	);
 	`
@@ -54,7 +81,7 @@ func createTable(db *sql.DB) error {
 
 func CreateConnection() (*sql.DB, error) {
 	proot, _ := config.GetProjectRoot()
-	db, err := sql.Open("sqlite3", path.Join(proot, config.Config.Database.Path))
+	db, err := sql.Open("sqlite3", path.Join(proot, "sqlite.db"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -64,13 +91,28 @@ func CreateConnection() (*sql.DB, error) {
 }
 
 func Initialize(keepConnectionOpen bool) (*sql.DB, error) {
-	db, _ := CreateConnection()
-	createTable(db)
+	dbCl, err := CreateConnection()
+	if err != nil {
+		fmt.Printf("Error creating DB connection: %v\n", err.Error())
+	}
+	createTable(dbCl)
 
-	if keepConnectionOpen {
-		return db, nil
+	err = initializeSettings(dbCl, defaultSettings)
+	if err != nil {
+		fmt.Printf("Encountered the following error when trying to insert defaults: %v\n", err.Error())
+		dbCl.Close()
+		return nil, err
 	}
 
-	db.Close()
+	_, err = LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v\n", err.Error())
+	}
+
+	if keepConnectionOpen {
+		return dbCl, nil
+	}
+
+	dbCl.Close()
 	return nil, nil
 }

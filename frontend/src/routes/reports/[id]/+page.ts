@@ -41,10 +41,8 @@ export const load = async ({ params }) => {
 
         // Handle cases where result is not found
         if (!result) {
-          console.log(result);
           reject(error(404, 'Report not found'));
         } else {
-          console.log(result);
           resolve(result);
         }
       })

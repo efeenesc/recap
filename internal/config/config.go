@@ -11,38 +11,21 @@ import (
 var Config AppConfig
 
 type AppConfig struct {
-	Database struct {
-		Path string `yaml:"path"`
-	} `yaml:"database"`
-	System struct {
-		ReportPath     string `yaml:"report_path"`
-		ScreenshotPath string `yaml:"screenshot_path"`
-	} `yaml:"system"`
-	LLM struct {
-		Screenshot struct {
-			API struct {
-				Connector string `yaml:"connector"`
-				Model     string `yaml:"model"`
-			} `yaml:"api"`
-			DescriptionGenInterval struct {
-				Enabled bool `yaml:"enabled"`
-				Hours   *int `yaml:"hours"`
-				Minutes *int `yaml:"minutes"`
-			} `yaml:"description_gen_interval"`
-			ScreenshotInterval struct {
-				Hours   *int `yaml:"hours"`
-				Minutes *int `yaml:"minutes"`
-			} `yaml:"screenshot_interval"`
-			Prompt string `yaml:"prompt"`
-		} `yaml:"screenshot"`
-		Report struct {
-			API struct {
-				Connector string `yaml:"connector"`
-				Model     string `yaml:"model"`
-			} `yaml:"api"`
-			Prompt string `yaml:"prompt"`
-		} `yaml:"report"`
-	} `yaml:"llm"`
+	ScrPath                   string `json:"ScrPath"`
+	DescGenAPI                string `json:"DescGenAPI"`
+	DescGenModel              string `json:"DescGenModel"`
+	DescGenPrompt             string `json:"DescGenPrompt"`
+	DescGenIntervalMins       int    `json:"DescGenIntervalMins"`
+	DescGenIntervalEnabled    int    `json:"DescGenIntervalEnabled"`
+	ScreenshotIntervalMins    int    `json:"ScreenshotIntervalMins"`
+	ScreenshotIntervalEnabled int    `json:"ScreenshotIntervalEnabled"`
+	ReportAPI                 string `json:"ReportAPI"`
+	ReportModel               string `json:"ReportModel"`
+	ReportAutoEnabled         int    `json:"ReportAutoEnabled"`
+	ReportAutoAt              string `json:"ReportAutoAt"`
+	ReportPrompt              string `json:"ReportPrompt"`
+	OllamaURL                 string `json:"OllamaURL"`
+	GeminiAPIKey              string `json:"GeminiAPIKey"`
 }
 
 func createFolderIfNotExists(path string) {
@@ -75,8 +58,7 @@ func Initialize() {
 			log.Fatalf("error: %v", err)
 		}
 
-		createFolderIfNotExists(path.Join(proot, Config.System.ReportPath))
-		createFolderIfNotExists(path.Join(proot, Config.System.ScreenshotPath))
+		createFolderIfNotExists(path.Join(proot, Config.ScrPath))
 		break
 	}
 

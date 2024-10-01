@@ -21,6 +21,8 @@ var (
 	llmTimer        = &Timer{}
 )
 
+// Initializes and starts the timer with the specified interval and callback function.
+// It stops any existing timer before starting a new one
 func (t *Timer) start(interval time.Duration, callback func()) {
 	t.stop()
 	t.ticker = time.NewTicker(interval)
@@ -36,6 +38,7 @@ func (t *Timer) start(interval time.Duration, callback func()) {
 	}()
 }
 
+// Halts the timer if it is currently running and stops the ticker
 func (t *Timer) stop() {
 	if t.ticker != nil {
 		t.ticker.Stop()
@@ -43,77 +46,82 @@ func (t *Timer) stop() {
 	}
 }
 
+// Callback function; captures a screenshot, saves it, writes it to the database
 func screenshotCallback() {
 	fmt.Printf("Taking screenshot at %s\n", time.Now())
-	fileName := screenshot.TakeScreenshot()
+	fullFilename, thumbFilename := screenshot.TakeScreenshot()
 	cl, err := db.CreateConnection()
 	if err != nil {
 		log.Fatalf("Could not create database connection! %v\n", err.Error())
 	}
-	lastId := db.InsertCapture(cl, []string{fileName})
+	lastId := db.InsertCapture(cl, []db.FullThumbScrPair{{Full: fullFilename, Thumb: thumbFilename}})
 	app.AppInstance.SendScreenshotRanMessage(lastId)
 }
 
+// Sends unprocessed screenshots to the vision model and inserts the descriptions
+// in the database
 func llmCallback() {
 	fmt.Printf("Sending queued screenshots to LLM at %s\n", time.Now())
 	llm.SendQueue()
 }
 
+// Initiates the screenshot capturing process at the specified interval.
+// It stops any currently running screenshot timer before starting a new one
 func StartScreenshotSchedule(interval time.Duration) {
 	fmt.Println("Starting screenshot schedule")
+	if screenshotTimer.running {
+		screenshotTimer.ticker.Stop()
+	}
 	screenshotTimer.start(interval, screenshotCallback)
 }
 
+// Initiates the LLM timer process at the specified interval.
+// It stops any currently running LLM timer before starting a new one
 func StartLLMTimer(interval time.Duration) {
+	if llmTimer.running {
+		llmTimer.ticker.Stop()
+	}
 	llmTimer.start(interval, llmCallback)
 }
 
+// Enables or disables the LLM schedule based on the provided state.
+// If enabled, it starts the LLM timer based on configuration; stops the timer otherwise
 func SetLLMScheduleState(state bool) {
 	if state {
-		StartLLMTimer(getDefaultInterval(120))
+		StartLLMTimer(time.Minute * time.Duration(config.Config.DescGenIntervalMins))
 	} else {
 		llmTimer.stop()
 	}
 }
 
+// Enables or disables the screenshot schedule based on the provided state.
+// If enabled, it starts the screenshot timer based on configuration; stops the timer otherwise
 func SetScrScheduleState(state bool) {
 	if state {
-		StartScreenshotSchedule(getDefaultInterval(5))
+		StartScreenshotSchedule(time.Minute * time.Duration(config.Config.ScreenshotIntervalMins))
 	} else {
 		screenshotTimer.stop()
 	}
 }
 
+// Returns the running state of the screenshot and LLM timers. Used by frontend
 func AreTimersRunning() (bool, bool) {
 	return screenshotTimer.running, llmTimer.running
 }
 
+// Sets up the timers based on configuration settings for screenshot capturing
+// and LLM generation. It starts the timers if enabled in the config.
 func Initialize() {
-	ssTakeObj := config.Config.LLM.Screenshot.ScreenshotInterval
-	ssGenObj := config.Config.LLM.Screenshot.DescriptionGenInterval
+	ssTakeEnabled := config.Config.ScreenshotIntervalEnabled
+	descGenEnabled := config.Config.DescGenIntervalEnabled
+	ssTakeInterval := config.Config.ScreenshotIntervalMins
+	descGenInterval := config.Config.DescGenIntervalMins
 
-	if interval := getDuration(ssTakeObj.Hours, ssTakeObj.Minutes); interval > 0 {
-		StartScreenshotSchedule(interval)
+	if ssTakeEnabled == 1 && ssTakeInterval > 0 {
+		StartScreenshotSchedule(time.Duration(ssTakeInterval) * time.Minute)
 	}
 
-	if ssGenObj.Enabled {
-		if interval := getDuration(ssGenObj.Hours, ssGenObj.Minutes); interval > 0 {
-			StartLLMTimer(interval)
-		}
+	if descGenEnabled == 1 && descGenInterval > 0 {
+		StartLLMTimer(time.Duration(descGenInterval) * time.Minute)
 	}
-}
-
-func getDuration(hours, minutes *int) time.Duration {
-	var totalMinutes int
-	if hours != nil {
-		totalMinutes += *hours * 60
-	}
-	if minutes != nil {
-		totalMinutes += *minutes
-	}
-	return time.Duration(totalMinutes) * time.Minute
-}
-
-func getDefaultInterval(minutes int) time.Duration {
-	return time.Duration(minutes) * time.Minute
 }

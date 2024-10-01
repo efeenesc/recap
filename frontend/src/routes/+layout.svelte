@@ -4,7 +4,6 @@
     import { onNavigate } from "$app/navigation";
     import { onMount } from "svelte";
     import Dialog from "../components/dialog/Dialog.svelte";
-    import gsap from 'gsap';
 
     let bodyFullHeight: number;
     let scrollHeight: number;
@@ -16,17 +15,8 @@
             const target = (ev.target as HTMLDivElement);
             scrollHeight = target.scrollTop;
             bodyFullHeight = target.scrollHeight;
-            // showScrollShadow(target.scrollTop);
         });
     });
-
-    // function showScrollShadow(scrollVal: number) {
-    //     console.log(scrollVal);
-    //     gsap.to('#scroll-gradient', {
-    //         opacity: scrollVal > 50 ? '1' : '0',
-    //         duration: 0.1
-    //     })
-    // }
 
     onNavigate((navigation) => {
         if (!document.startViewTransition) return;

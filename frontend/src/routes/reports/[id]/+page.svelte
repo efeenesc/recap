@@ -61,15 +61,28 @@
                                 class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-800 opacity-0 hidden"
                             ></div>
                             <div
-                                class="transition-box-content flex flex-col rounded-xl object-contain select-none pointer-events-none"
+                                class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
                             >
-                                <h3>
-                                    {report.Time}
-                                </h3>
+                                <div class="-mt-4">
+                                    <MarkdownRenderer
+                                        parsedContent={parseMd(report.Content)
+                                            .content}
+                                    ></MarkdownRenderer>
+                                </div>
+                            </div>
+                            <h3 class="flex-shrink-0 pl-2 py-1">
+                                {report.Time}
+                            </h3>
+                            <!-- <div
+                                class="transition-box-content flex flex-col rounded-xl object-contain select-none pointer-events-none py-6 px-3"
+                            >
                                 <div>
                                     <MarkdownRenderer parsedContent={parseMd(report.Content).content}></MarkdownRenderer>
                                 </div>
-                            </div>
+                                <h3 class="flex-shrink-0 pl-2 py-1">
+                                    {report.Time}
+                                </h3>
+                            </div> -->
                         </div>
                     </div>
                     <div class="flex flex-col justify-end items-end gap-5 mt-4">

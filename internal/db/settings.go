@@ -3,26 +3,11 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"rcallport/internal/config"
+	"reflect"
 	"strconv"
 )
-
-type AppConfig struct {
-	ScrPath                   string `json:"ScrPath"`
-	DescGenAPI                string `json:"DescGenAPI"`
-	DescGenModel              string `json:"DescGenModel"`
-	DescGenPrompt             string `json:"DescGenPrompt"`
-	DescGenIntervalMins       int    `json:"DescGenIntervalMins"`
-	DescGenIntervalEnabled    int    `json:"DescGenIntervalEnabled"`
-	ScreenshotIntervalMins    int    `json:"ScreenshotIntervalMins"`
-	ScreenshotIntervalEnabled int    `json:"ScreenshotIntervalEnabled"`
-	ReportAPI                 string `json:"ReportAPI"`
-	ReportModel               string `json:"ReportModel"`
-	ReportAutoEnabled         int    `json:"ReportAutoEnabled"`
-	ReportAutoAt              string `json:"ReportAutoAt"`
-	ReportPrompt              string `json:"ReportPrompt"`
-	OllamaURL                 string `json:"OllamaURL"`
-	GeminiAPIKey              string `json:"GeminiAPIKey"`
-}
 
 type Setting struct {
 	Key   string `json:"Key"`
@@ -48,7 +33,7 @@ var defaultSettings = map[string]string{
 	"ReportAPI":                 "gemini",
 	"ReportModel":               "gemini-1.5-flash",
 	"ReportAutoEnabled":         "0",
-	"ReportAutoAt":              "09:00", // Default auto report time
+	"ReportAutoAt":              "17:00", // Default auto report time
 	"ReportPrompt":              "You are an AI assistant tasked with generating a daily activity report for a user based on a series of visual descriptions captured from their computer screen throughout the day. Your job is to summarize this data into brief items describing what the user worked on today.",
 	"OllamaURL":                 "http://localhost:11434",
 	"GeminiAPIKey":              "your-gemini-api-key",
@@ -56,21 +41,21 @@ var defaultSettings = map[string]string{
 
 func GetDisplayValues() map[string]SettingDisplayProps {
 	var settingKeyDisplayVals = map[string]SettingDisplayProps{
-		"ScrPath":                   {DisplayName: "Path", Description: "Where screenshots will be saved", Category: "Screenshots", InputType: "FolderPicker"},
-		"DescGenAPI":                {DisplayName: "API", Description: "API to be used while generating screenshot descriptions", Category: "Vision", InputType: "APIPicker"},
-		"DescGenModel":              {DisplayName: "Model", Description: "Vision model to be used while generating screenshot descriptions", Category: "Vision", InputType: "APIModelPicker"},
-		"DescGenPrompt":             {DisplayName: "Prompt", Description: "Prompt to be used while generating screenshot descriptions", Category: "Vision", InputType: "ExtendedTextInput"},
-		"DescGenIntervalMins":       {DisplayName: "Interval", Description: "Minutes interval of sending screenshots for description generation", Category: "Vision", InputType: "NumberInput"},
-		"DescGenIntervalEnabled":    {DisplayName: "Schedule", Description: "Whether descriptions should be automatically sent for description generation", Category: "Vision", InputType: "Boolean"}, // 1 for enabled, 0 for disabled
-		"ScreenshotIntervalMins":    {DisplayName: "Interval", Description: "Minutes interval of taking screenshots", Category: "Screenshots", InputType: "NumberInput"},                              // Default interval in minutes
-		"ScreenshotIntervalEnabled": {DisplayName: "Schedule", Description: "Whether screenshots should be automatically taken", Category: "Screenshots", InputType: "Boolean"},                       // 1 for enabled, 0 for disabled
-		"ReportAPI":                 {DisplayName: "API", Description: "API to be used while generating reports from screenshot descriptions", Category: "Reports", InputType: "APIPicker"},
-		"ReportModel":               {DisplayName: "Model", Description: "Text generation model to be used while generating reports from screenshot descriptions", Category: "Reports", InputType: "APIModelPicker"},
-		"ReportAutoEnabled":         {DisplayName: "Schedule", Description: "Whether reports should be automatically generated", Category: "Reports", InputType: "Boolean"},
-		"ReportAutoAt":              {DisplayName: "Time", Description: "Time at which a report should be generated every day", Category: "Reports", InputType: "TimePicker"}, // Default auto report time
-		"ReportPrompt":              {DisplayName: "Prompt", Description: "Prompt to be used when generating a report from screenshot descriptions", Category: "Reports", InputType: "ExtendedTextInput"},
-		"OllamaURL":                 {DisplayName: "Ollama URL", Description: "URL of Ollama's endpoint (port included). Defaults to http://localhost:11434", Category: "Models", InputType: "URLInput"},
-		"GeminiAPIKey":              {DisplayName: "Gemini API key", Description: "Your Gemini API key. You can get your own free API key from Google. Refer to the \"Setting up\" section of the tutorial for instructions", Category: "Models", InputType: "TextInput"},
+		"ScrPath":                   {DisplayName: "Path", Description: "Specify the directory where screenshots will be saved on your device", Category: "Screenshots", InputType: "FolderPicker"},
+		"DescGenAPI":                {DisplayName: "API", Description: "Select the AI service to use for generating descriptions of your screenshots", Category: "Vision", InputType: "APIPicker"},
+		"DescGenModel":              {DisplayName: "Model", Description: "Choose the specific AI model for analyzing screenshots and generating descriptions", Category: "Vision", InputType: "APIModelPicker"},
+		"DescGenPrompt":             {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating screenshot descriptions", Category: "Vision", InputType: "ExtendedTextInput"},
+		"DescGenIntervalEnabled":    {DisplayName: "Schedule", Description: "Enable or disable automatic screenshot capturing and description generation at set intervals", Category: "Vision", InputType: "Boolean"},
+		"DescGenIntervalMins":       {DisplayName: "Interval", Description: "Set how often (in minutes) screenshots should be automatically sent for description generation", Category: "Vision", InputType: "NumberInput"},
+		"ScreenshotIntervalEnabled": {DisplayName: "Schedule", Description: "Toggle automatic screenshot capturing at regular intervals on or off", Category: "Screenshots", InputType: "Boolean"},
+		"ScreenshotIntervalMins":    {DisplayName: "Interval", Description: "Define how frequently (in minutes) automatic screenshots should be taken", Category: "Screenshots", InputType: "NumberInput"},
+		"ReportAPI":                 {DisplayName: "API", Description: "Choose the AI service for generating reports based on your screenshot descriptions", Category: "Reports", InputType: "APIPicker"},
+		"ReportModel":               {DisplayName: "Model", Description: "Select the specific AI model for creating reports from your screenshot descriptions", Category: "Reports", InputType: "APIModelPicker"},
+		"ReportAutoEnabled":         {DisplayName: "Schedule", Description: "Enable or disable automatic daily report generation", Category: "Reports", InputType: "Boolean"},
+		"ReportAutoAt":              {DisplayName: "Time", Description: "Set the specific time each day when an automatic report should be generated", Category: "Reports", InputType: "TimePicker"},
+		"ReportPrompt":              {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating reports from your screenshot descriptions", Category: "Reports", InputType: "ExtendedTextInput"},
+		"OllamaURL":                 {DisplayName: "Ollama URL", Description: "Enter the URL (including port) for your Ollama instance. The default is http://localhost:11434", Category: "Models", InputType: "URLInput"},
+		"GeminiAPIKey":              {DisplayName: "Gemini API key", Description: "Enter your Gemini API key. You can obtain a free API key from Google. For instructions, please refer to the 'Setting up' section in the tutorial", Category: "Models", InputType: "TextInput"},
 	}
 
 	return settingKeyDisplayVals
@@ -94,7 +79,7 @@ func LoadSettings(db *sql.DB) (map[string]Setting, error) {
 	return settings, nil
 }
 
-func LoadConfig() (*AppConfig, error) {
+func LoadConfig() (*config.AppConfig, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
 		return nil, err
@@ -112,7 +97,7 @@ func LoadConfig() (*AppConfig, error) {
 	defaultScrIntervalEnabled, _ := strconv.Atoi(defaultSettings["ScreenshotIntervalEnabled"])
 	defaultReportAutoEnabled, _ := strconv.Atoi(defaultSettings["ReportAutoEnabled"])
 
-	config := &AppConfig{
+	loadedConf := &config.AppConfig{
 		ScrPath:                   defaultSettings["ScrPath"],
 		DescGenAPI:                defaultSettings["DescGenAPI"],
 		DescGenModel:              defaultSettings["DescGenModel"],
@@ -134,38 +119,40 @@ func LoadConfig() (*AppConfig, error) {
 	for key, setting := range settingsMap {
 		switch key {
 		case "ScrPath":
-			config.ScrPath = setting.Value
+			loadedConf.ScrPath = setting.Value
 		case "DescGenAPI":
-			config.DescGenAPI = setting.Value
+			loadedConf.DescGenAPI = setting.Value
 		case "DescGenModel":
-			config.DescGenModel = setting.Value
+			loadedConf.DescGenModel = setting.Value
 		case "DescGenPrompt":
-			config.DescGenPrompt = setting.Value
+			loadedConf.DescGenPrompt = setting.Value
 		case "DescGenIntervalMins":
-			config.DescGenIntervalMins, _ = strconv.Atoi(setting.Value)
+			loadedConf.DescGenIntervalMins, _ = strconv.Atoi(setting.Value)
 		case "DescGenIntervalEnabled":
-			config.DescGenIntervalEnabled, _ = strconv.Atoi(setting.Value)
+			loadedConf.DescGenIntervalEnabled, _ = strconv.Atoi(setting.Value)
 		case "ScreenshotIntervalMins":
-			config.ScreenshotIntervalMins, _ = strconv.Atoi(setting.Value)
+			loadedConf.ScreenshotIntervalMins, _ = strconv.Atoi(setting.Value)
 		case "ScreenshotIntervalEnabled":
-			config.ScreenshotIntervalEnabled, _ = strconv.Atoi(setting.Value)
+			loadedConf.ScreenshotIntervalEnabled, _ = strconv.Atoi(setting.Value)
 		case "ReportAPI":
-			config.ReportAPI = setting.Value
+			loadedConf.ReportAPI = setting.Value
 		case "ReportModel":
-			config.ReportModel = setting.Value
+			loadedConf.ReportModel = setting.Value
 		case "ReportAutoEnabled":
-			config.ReportAutoEnabled, _ = strconv.Atoi(setting.Value)
+			loadedConf.ReportAutoEnabled, _ = strconv.Atoi(setting.Value)
 		case "ReportAutoAt":
-			config.ReportAutoAt = setting.Value
+			loadedConf.ReportAutoAt = setting.Value
 		case "ReportPrompt":
-			config.ReportPrompt = setting.Value
+			loadedConf.ReportPrompt = setting.Value
 		case "OllamaURL":
-			config.OllamaURL = setting.Value
+			loadedConf.OllamaURL = setting.Value
 		case "GeminiAPIKey":
-			config.GeminiAPIKey = setting.Value
+			loadedConf.GeminiAPIKey = setting.Value
 		}
 	}
-	return config, nil
+
+	config.Config = *loadedConf
+	return loadedConf, nil
 }
 
 func validateSettings(settings map[string]Setting) {
@@ -181,9 +168,95 @@ func validateSettings(settings map[string]Setting) {
 	}
 }
 
+func RefreshInit(newSettings map[string]string) {
+	_, ok1 := newSettings["ScreenshotIntervalMins"]
+	_, ok2 := newSettings["DescGenIntervalMins"]
+
+	if (ok1 || ok2) && Initializers.FunctionsGiven {
+		Initializers.InitSchedule()
+	}
+
+	_, ok1 = newSettings["DescGenAPI"]
+	_, ok2 = newSettings["ReportAPI"]
+
+	if (ok1 || ok2) && Initializers.FunctionsGiven {
+		Initializers.InitLLM()
+	}
+}
+
+func UpdateSettings(newSettings map[string]string) error {
+	dbCl, err := CreateConnection()
+	if err != nil {
+		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+		return err
+	}
+	defer dbCl.Close()
+
+	for key, val := range newSettings {
+		err = updateSetting(dbCl, key, val)
+		if err != nil {
+			fmt.Printf("Error when updating %s with %s: %v\n", key, val, err.Error())
+			return err
+		}
+
+		// Update the config.Config struct via reflection. Find field with 'key', then update the field with 'val'
+		r := reflect.ValueOf(&config.Config).Elem()
+		field := r.FieldByName(key)
+		if field.IsValid() && field.CanSet() {
+			field.SetString(val)
+		} else {
+			fmt.Printf("Field %s not found or not settable\n", key)
+		}
+	}
+
+	return nil
+}
+
 func updateSetting(db *sql.DB, key, newValue string) error {
 	_, err := db.Exec("UPDATE settings SET value = ? WHERE key = ?", newValue, key)
 	return err
+}
+
+// initializeSettings goes through a map of keys and default values,
+// checks if they exist in the settings table, and creates them if they don't exist.
+func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
+	// Prepare the SELECT statement
+	selectStmt, err := db.Prepare("SELECT value FROM settings WHERE key = ?")
+	if err != nil {
+		return fmt.Errorf("error preparing SELECT statement: %w", err)
+	}
+	defer selectStmt.Close()
+
+	// Prepare the INSERT statement
+	insertStmt, err := db.Prepare("INSERT INTO settings (key, value) VALUES (?, ?)")
+	if err != nil {
+		return fmt.Errorf("error preparing INSERT statement: %w", err)
+	}
+	defer insertStmt.Close()
+
+	// Iterate through the default settings
+	for key, defaultValue := range defaultSettings {
+		// Check if the key exists
+		var value string
+		err := selectStmt.QueryRow(key).Scan(&value)
+
+		if err == sql.ErrNoRows {
+			// Key doesn't exist, insert the default value
+			_, err = insertStmt.Exec(key, defaultValue)
+			if err != nil {
+				return fmt.Errorf("error inserting default value for key %s: %w", key, err)
+			}
+			log.Printf("Inserted default value for key: %s", key)
+		} else if err != nil {
+			// An error occurred during the SELECT
+			return fmt.Errorf("error checking existence of key %s: %w", key, err)
+		} else {
+			// Key exists, do nothing
+			log.Printf("Key already exists: %s", key)
+		}
+	}
+
+	return nil
 }
 
 func isValid(setting Setting) bool {

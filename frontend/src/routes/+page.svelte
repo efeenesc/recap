@@ -28,14 +28,13 @@
         const res = await GetScreenshots(10);
         if (!res) {
             noScreenshots = true;
+            return;
         }
         noScreenshots = false;
         screenshots = res.map((s: any) => {
             s.Date = timeSinceUNIXSeconds(s.Timestamp);
             return s;
         });
-
-        console.log(screenshots);
     }
 
     async function getReports() {
@@ -90,7 +89,8 @@
                         {#each screenshots as s (s.CaptureID)}
                             <div
                                 id="s{s.CaptureID}"
-                                class="rounded-lg bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900 outline w-max overflow-hidden outline-1 p-1 mr-5 shadow-2xl opacity-0 scale-95"
+                                class="rounded-lg h-[300px] bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900 
+                                outline w-max overflow-hidden outline-1 p-1 mr-5 shadow-2xl opacity-0 scale-95"
                             >
                                 <img
                                     alt="screenshot"
@@ -99,9 +99,12 @@
                                         onLoad();
                                         animateLoad("s" + s.CaptureID);
                                     }}
-                                    class="flex rounded-md max-h-[300px] object-contain select-none pointer-events-none"
+                                    class="flex rounded-md h-[90%] flex-shrink object-contain select-none pointer-events-none"
                                     src={s.Screenshot}
                                 />
+                                <h3 class="flex-shrink-0 pl-2 py-1 self-end">
+                                    {s.Date}
+                                </h3>
                             </div>
                         {/each}
                     </Carousel>
@@ -129,26 +132,25 @@
                         {#each reports as r (r.ReportID)}
                             <div
                                 id="s{r.ReportID}"
-                                class="max-h-[300px] max-w-[400px] relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl"
+                                class="max-h-[300px] flex flex-col max-w-[400px] relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl"
                             >
                                 <div
                                     on:load|once={() => {
                                         onLoad();
                                         animateLoad("s" + r.ReportID);
                                     }}
-                                    class="flex flex-col transition-all rounded-xl object-contain select-none pointer-events-none"
+                                    class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
                                 >
-                                    <h3>
-                                        {r.Date}
-                                    </h3>
-                                    <div>
+                                    <div class="-mt-4">
                                         <MarkdownRenderer
-                                            parsedContent={parseMd(
-                                                r.Content
-                                            ).content}
+                                            parsedContent={parseMd(r.Content)
+                                                .content}
                                         ></MarkdownRenderer>
                                     </div>
                                 </div>
+                                <h3 class="flex-shrink-0 pl-2 py-1">
+                                    {r.Date}
+                                </h3>
                             </div>
                         {/each}
                     </Carousel>
@@ -158,8 +160,8 @@
                             Your generated reports will appear here.
                         </h1>
                         <h1 class="text-2xl">
-                            Click generate to create your first AI-generated
-                            report! 🪄
+                            Go to the screenshots page, select your screenshots, and click
+                            'Report'! 🪄
                         </h1>
                     </div>
                 {/if}

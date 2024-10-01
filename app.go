@@ -19,10 +19,13 @@ func addBindings() *app.AppMethods {
 	methods.CGetScreenshots = db.GetScreenshots
 	methods.CGetReports = db.GetReports
 	methods.CGetScreenshotById = db.GetScreenshotById
+	methods.CGetScreenshotsNewerThan = db.GetScreenshotsNewerThan
+	methods.CGetScreenshotsOlderThan = db.GetScreenshotsOlderThan
 	methods.CGenerateReportWithSelectScr = llm.GenerateReportWithSelectScr
 	methods.CGetReportById = db.GetReportById
 	methods.CGetConfig = db.LoadConfig
 	methods.CGetDisplayValues = db.GetDisplayValues
+	methods.CUpdateSettings = db.UpdateSettings
 	methods.FunctionsGiven = true
 	return methods
 }

@@ -33,7 +33,6 @@
     async function getData(): Promise<DatedReport | undefined> {
         try {
             const items = await data.streamed.items;
-            console.log(items);
             rcvRep.set(items);
             setTimeout(() => animateLoadForAllDivs(), 100);
             return items;
@@ -58,8 +57,8 @@
             addNewDialog({
                 title: "New item added",
                 description: `New report ID: ${lastId}`,
-                buttonLink: `/reports/${lastId}`,
-                buttonLinkDescription: "Open report",
+                primaryButtonCallback: () => goto(`/reports/${lastId}`),
+                primaryButtonName: "Open report",
             });
         });
     }
@@ -209,7 +208,10 @@
                 bind:this={title}
                 class="page-title text-2xl -tracking-wide opacity-85 w-full"
             >
-                Reports
+                <span class="z-50">
+                    Reports
+                </span>
+                
             </h1>
             <div
                 class="flex gap-2 justify-self-end -tracking-wide text-xl z-30 text-black font-semibold"
@@ -264,7 +266,7 @@
                                 >
                                     <div
                                         id="r{r.ReportID}"
-                                        class="group report-div max-h-[200px] cursor-pointer relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl opacity-0 scale-95"
+                                        class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl opacity-0 scale-95"
                                     >
                                         {#if selecting}
                                             <div
@@ -285,19 +287,18 @@
                                         {/if}
 
                                         <div
-                                            class="flex flex-col group-hover:scale-[99%] group-active:scale-[95%] transition-all rounded-xl object-contain select-none pointer-events-none"
+                                            class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
                                         >
-                                            <h3>
-                                                {r.Time}
-                                            </h3>
-                                            <div>
+                                            <div class="-mt-4">
                                                 <MarkdownRenderer
-                                                    parsedContent={parseMd(
-                                                        r.Content
-                                                    ).content}
+                                                    parsedContent={parseMd(r.Content)
+                                                        .content}
                                                 ></MarkdownRenderer>
                                             </div>
                                         </div>
+                                        <h3 class="flex-shrink-0 pl-2 py-1">
+                                            {r.Time}
+                                        </h3>
                                     </div>
                                 </div>
                             {/each}

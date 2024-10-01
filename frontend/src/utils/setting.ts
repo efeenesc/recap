@@ -1,4 +1,3 @@
-import { db } from "$lib/wailsjs/go/models.ts"
 import type { ExtendedSettings, ExtendedSettingDisplay, BasicSetting, CategorizedSettings } from "../types/ExtendedSettings.interface.ts";
 
 export const joinDisplaySettings = (config: BasicSetting, displayVals: ExtendedSettings): CategorizedSettings => {
@@ -14,7 +13,6 @@ export const joinDisplaySettings = (config: BasicSetting, displayVals: ExtendedS
       }
     }
 
-    console.log(value);
     if (!val[category])
       val[category] = {}
     

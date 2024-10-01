@@ -1,5 +1,5 @@
 import { screenshotStore } from "$lib/stores/ScreenshotStore.ts";
-import { GetScreenshotById, GetScreenshots } from "$lib/wailsjs/go/app/AppMethods.js";
+import { GetScreenshotById, GetScreenshots, GetScreenshotsOlderThan, GetScreenshotsNewerThan } from "$lib/wailsjs/go/app/AppMethods.js";
 import type { ExtendedScreenshot } from "../types/ExtendedScreenshot.interface.ts";
 import { db } from "$lib/wailsjs/go/models.ts";
 
@@ -27,6 +27,20 @@ export const getScreenshotById = async (id: number): Promise<ExtendedScreenshot>
     const processed = processScreenshots([res]);
     return processed[0];
 };
+
+export const getScreenshotsOlderThan = async (id: number, limit: number) => {
+    const res = await GetScreenshotsOlderThan(id, limit);
+    console.log(res);
+    const processed = processScreenshots(res);
+    return processed;
+}
+
+export const getScreenshotsNewerThan = async (id: number) => {
+    const res = await GetScreenshotsNewerThan(id);
+    if (!res) return null;
+    const processed = processScreenshots(res);
+    return processed;
+}
 
 export const addScreenshotToStore = async (id: number): Promise<ExtendedScreenshot> => {
     const res = await getScreenshotById(id);

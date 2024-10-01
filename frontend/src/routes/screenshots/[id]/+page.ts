@@ -9,7 +9,7 @@ import { getScreenshotById } from "../../../utils/screenshot.ts";
 async function pullFromDb(id: number): Promise<ExtendedScreenshot | null> {
   try {
     const res = await getScreenshotById(id);
-    return res
+    return res;
   } catch (err) {
     console.error(`Failed to fetch screenshot with ID ${id}`, err);
     return null;
@@ -32,20 +32,12 @@ export const load = async ({ params }) => {
   return {
     streamed: {
       items: new Promise(async (resolve, reject) => {
-        const allScr = get(screenshotStore);
-        let result = pullFromStore(scrId, allScr);
-
-        // If not in store, try fetching from database
-        if (!result) {
-          result = await pullFromDb(scrId);
-        }
+        const result = await pullFromDb(scrId);
 
         // Handle cases where result is not found
         if (!result) {
-          console.log(result);
           reject(error(404, 'Screenshot not found'));
         } else {
-          console.log(result);
           resolve(result); // Pass the screenshot result
         }
       })

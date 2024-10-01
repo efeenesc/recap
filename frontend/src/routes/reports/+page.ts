@@ -35,7 +35,6 @@ export const load = async () => {
 
         // Handle cases where result is not found
         if (!result) {
-          console.log(result);
           reject(0);
         } else {
           processedReportStore.subscribe(val => resolve(val))

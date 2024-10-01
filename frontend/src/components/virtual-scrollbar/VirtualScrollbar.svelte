@@ -21,8 +21,7 @@
     function calculateScrollbarPosition(): number {
         const scrollPos =
             ((bodyScroll + bodyInner) / bodyHeight) * 100 - virtualScrollHeight;
-        // (bodyScroll / bodyHeight) * (thisHeight - scrollbarHeight);
-        // console.log(scrollPos, bodyScroll, bodyInner, bodyHeight, bodyHeight - bodyInner)
+
         return scrollPos;
     }
 

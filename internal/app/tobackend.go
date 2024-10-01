@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"rcallport/internal/config"
 	"rcallport/internal/db"
 
 	"github.com/sqweek/dialog"
@@ -51,6 +52,34 @@ func (a *AppMethods) GetScreenshots(limit int) []db.CaptureScreenshotImage {
 	}
 
 	return []db.CaptureScreenshotImage{}
+}
+
+func (a *AppMethods) GetScreenshotsOlderThan(id int, limit int) ([]db.CaptureScreenshotImage, error) {
+	if a.FunctionsGiven {
+		results, err := a.CGetScreenshotsOlderThan(id, limit)
+		if err != nil {
+			fmt.Printf("Received error from GetScreenshotsOlderThan: %v\n", err)
+			return []db.CaptureScreenshotImage{}, err
+		}
+
+		return results, nil
+	}
+
+	return []db.CaptureScreenshotImage{}, fmt.Errorf("Callback functions were not passed to AppMethods\n")
+}
+
+func (a *AppMethods) GetScreenshotsNewerThan(id int) ([]db.CaptureScreenshotImage, error) {
+	if a.FunctionsGiven {
+		results, err := a.CGetScreenshotsNewerThan(id)
+		if err != nil {
+			fmt.Printf("Received error from GetScreenshotsNewerThan: %v\n", err)
+			return []db.CaptureScreenshotImage{}, err
+		}
+
+		return results, nil
+	}
+
+	return []db.CaptureScreenshotImage{}, fmt.Errorf("Callback functions were not passed to AppMethods\n")
 }
 
 func (a *AppMethods) GetReports(limit int) []db.Report {
@@ -109,7 +138,7 @@ func (a *AppMethods) GenerateReportFromScreenshotIds(ids []int) (*int64, error) 
 	return nil, nil
 }
 
-func (a *AppMethods) GetConfig() *db.AppConfig {
+func (a *AppMethods) GetConfig() *config.AppConfig {
 	if a.FunctionsGiven {
 		result, err := a.CGetConfig()
 		if err != nil {
@@ -142,4 +171,17 @@ func (a *AppMethods) SelectFolder() (*string, error) {
 	}
 
 	return &folder, err
+}
+
+func (a *AppMethods) UpdateSettings(newSettings map[string]string) error {
+	if a.FunctionsGiven {
+		err := a.CUpdateSettings(newSettings)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	} else {
+		return fmt.Errorf("Missing function when calling UpdateSettings\n")
+	}
 }

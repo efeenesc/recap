@@ -15,8 +15,9 @@ import (
 var visionModel models.ITextVisionModel
 var textModel models.ITextVisionModel
 
+// Processes descriptions from screenshots into formatted context to be passed to the LLM
 func preprocessContext(caps []db.CaptureDescription) string {
-	prompt := config.Config.LLM.Report.Prompt
+	prompt := config.Config.ReportPrompt
 
 	for _, cap := range caps {
 		prompt += "BEGIN DESCRIPTION\n"
@@ -27,6 +28,9 @@ func preprocessContext(caps []db.CaptureDescription) string {
 	return prompt
 }
 
+// Generates a daily report based on captures from today.
+// It retrieves today's captures, processes them through AI for descriptions,
+// and logs the resulting report. Returns the ID of the logged report or an error.
 func GenerateDailyReport() (*int64, error) {
 	dbCl, err := db.CreateConnection()
 	if err != nil {
@@ -59,6 +63,9 @@ func GenerateDailyReport() (*int64, error) {
 	return db.LogDailyReport(dbCl, res, todayCaps)
 }
 
+// Generates a report using a selected list of screenshot IDs.
+// It retrieves the specified captures, processes those that lack descriptions,
+// and generates a report based on the combined descriptions. Returns the ID of the logged report or an error.
 func GenerateReportWithSelectScr(ids []int) (*int64, error) {
 	log.Println("Starting report generation")
 	dbCl, err := db.CreateConnection()
@@ -108,6 +115,9 @@ func GenerateReportWithSelectScr(ids []int) (*int64, error) {
 	return db.LogDailyReport(dbCl, res, descs)
 }
 
+// Processes a batch of screenshot captures to generate descriptions.
+// It describes each screenshot using the vision model and updates the descriptions in the database.
+// Returns a slice of CaptureDescription with the generated descriptions or an error.
 func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.CaptureDescription, error) {
 	if dbCl == nil {
 		newCl, err := db.CreateConnection()
@@ -137,7 +147,7 @@ func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.Captur
 				continue
 			}
 
-			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.LLM.Screenshot.Prompt)
+			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
 			if err != nil {
 				log.Printf("Error processing file %s: %v", cap.Filename, err)
 				continue
@@ -167,6 +177,8 @@ func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.Captur
 	return returnQ, nil
 }
 
+// Truncates a string to a specified maximum length and appends ellipsis if truncated.
+// Returns the truncated string.
 func truncateString(s string, maxLength int) string {
 	if len(s) <= maxLength {
 		return s
@@ -174,6 +186,7 @@ func truncateString(s string, maxLength int) string {
 	return s[:maxLength] + "..."
 }
 
+// Returns the smaller of two integers a and b.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -181,6 +194,9 @@ func min(a, b int) int {
 	return b
 }
 
+// Processes unprocessed captures from the database in batches,
+// generates descriptions using the vision model, and updates the database.
+// Waits for one minute between batches if necessary.
 func SendQueue() {
 	dbCl, err := db.CreateConnection()
 	if err != nil {
@@ -196,8 +212,6 @@ func SendQueue() {
 		return
 	}
 
-	fmt.Println(len(fullQueue))
-
 	for i := 0; i < len(fullQueue); i += 15 {
 		end := i + 15
 		if end > len(fullQueue) {
@@ -206,7 +220,7 @@ func SendQueue() {
 		processingQueue := fullQueue[i:end]
 
 		for _, cap := range processingQueue {
-			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.LLM.Screenshot.Prompt)
+			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
 			if err != nil {
 				fmt.Printf("Error processing file %s: %v\n", cap.Filename, err)
 				continue
@@ -229,40 +243,40 @@ func SendQueue() {
 	fmt.Println("Queue processing completed")
 }
 
+// Sets up the vision and text models based on configuration settings.
+// It selects the appropriate API clients for image description and report generation.
 func Initialize() {
-	visionAPI := config.Config.LLM.Screenshot.API
-	visionModelName := visionAPI.Connector
+	visionAPI := config.Config.DescGenAPI
+	visionModelName := config.Config.DescGenModel
 
-	textAPI := config.Config.LLM.Report.API
-	textModelName := textAPI.Connector
+	textAPI := config.Config.ReportAPI
+	textModelName := config.Config.ReportModel
 
-	fmt.Println("INITIALIZING THIS SHIT")
-
-	switch visionModelName {
+	switch visionAPI {
 	case "gemini":
-		visionModel = gemini.CreateAPIClient(visionAPI.Model)
+		visionModel = gemini.CreateAPIClient(visionModelName)
 
 	case "ollama":
-		visionModel = ollama.CreateAPIClient(visionAPI.Model)
+		visionModel = ollama.CreateAPIClient(visionModelName)
 
 	default:
-		log.Fatalf("Unsupported screenshot/vision API: %s\n", visionAPI.Connector)
+		log.Fatalf("Unsupported screenshot/vision API: %s\n", visionAPI)
 	}
 
 	if visionModelName == textModelName {
 		textModel = visionModel
 	} else {
-		switch textModelName {
+		switch textAPI {
 		case "gemini":
-			textModel = gemini.CreateAPIClient(textAPI.Model)
+			textModel = gemini.CreateAPIClient(textModelName)
 
 		case "ollama":
-			textModel = ollama.CreateAPIClient(textAPI.Model)
+			textModel = ollama.CreateAPIClient(textModelName)
 
 		default:
-			log.Fatalf("Unsupported report/text API: %s\n", visionAPI.Connector)
+			log.Fatalf("Unsupported report/text API: %s\n", textAPI)
 		}
 	}
 
-	fmt.Printf("Using %s %s for vision and %s %s for text\n", visionModelName, visionAPI.Model, textModelName, textAPI.Model)
+	fmt.Printf("Using %s %s for vision and %s %s for text\n", visionAPI, visionModelName, textAPI, textModelName)
 }

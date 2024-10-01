@@ -42,6 +42,7 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
+		"@fontsource/inter": "^5.1.0",
 		"gsap": "^3.12.5",
 		"svelte-tiny-virtual-list": "^2.1.2"
 	}

@@ -7,6 +7,7 @@
     import { page } from '$app/stores'; 
     import Toggle from "../checkbox/Toggle.svelte";
     import { goto } from '$app/navigation'
+    import HomeIcon from "../../icons/HomeIcon.svelte";
     
     let currentRoute: string;
     let scrTimer: boolean = true;
@@ -17,7 +18,7 @@
     const routes = [
         {
             path: "/",
-            icon: ScreenshotIcon,
+            icon: HomeIcon,
             title: "Home",
         },
         {
@@ -63,15 +64,11 @@
         onResize();
     });
 
-    function showOverlayClick() {
-        showOverlay = !showOverlay;
-    }
-
     function routeClicked(path: string) {
         goto(path);
     }
 
-    getTimerStatus()
+    getTimerStatus();
     $: currentRoute = $page.url.pathname;
 </script>
 
@@ -88,7 +85,7 @@
                                 class="w-fit h-min flex gap-2 items-center justify-center overflow-hidden relative"
                             >
                                 <div class="sidepanel-icon w-8 h-8">
-                                    <svelte:component this={r.icon} strokeColor={"#666666"}></svelte:component>
+                                    <svelte:component this={r.icon} strokeColor="#666666"></svelte:component>
                                 </div>
                                 
                                 <h2 class="text-lg tracking-wide">{r.title}</h2>
@@ -103,7 +100,7 @@
                 <div class="flex flex-col justify-center items-center px-2 py-4 dark:bg-neutral-100 dark:text-neutral-950 rounded-lg mb-6">
                     <div class="mb-4 subpixel-antialiased">Schedule</div>
                     <div class="flex flex-wrap justify-between gap-2">
-                        <h2 class="text-lg tracking-wide">Screenshots </h2>
+                        <h2 class="text-lg tracking-wide">Screenshots</h2>
     
                         <Toggle checked={scrTimer} 
                         neu={true}
@@ -117,29 +114,24 @@
                         on:checked={(e) => startStopLLMTimer()}></Toggle>
                     </div>
                 </div>
-                
             </div>
         {:else}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div
-                on:click={showOverlayClick}
-                class="w-[100px] bg-neutral-100 h-24"
-            ></div>
+            <div class="flex flex-col gap-2">
+                {#each routes as r}
+                    <div on:click={() => routeClicked(r.path)} class="mx-1 cursor-pointer px-2 py-2 {currentRoute === r.path ? "dark:bg-neutral-100 dark:text-neutral-950 rounded-lg" : "" }">
+                        <div
+                            title={r.title}
+                            class="w-fit h-min flex gap-2 items-center justify-center overflow-hidden relative"
+                        >
+                            <div class="sidepanel-icon w-8 h-8">
+                                <svelte:component this={r.icon} strokeColor="#666666"></svelte:component>
+                            </div>
+                        </div>
+                    </div>
+                {/each}
+            </div>
         {/if}
     </div>
-
-    {#if showOverlay}
-        <div
-            class="fixed left-0 top-0 w-[300px] h-screen bg-neutral-100 outline outline-1 outline-white z-20"
-        ></div>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-            on:click={showOverlayClick}
-            class="fixed left-0 top-0 w-screen h-screen opacity-10 bg-black z-10"
-        ></div>
-    {/if}
 </div>
 
 <style global lang="postcss">

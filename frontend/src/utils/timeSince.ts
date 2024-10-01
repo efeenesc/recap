@@ -3,25 +3,29 @@ export function timeSinceUNIXSeconds(date: number) {
     let interval = seconds / 31536000;
 
     if (interval > 1) {
-        return Math.floor(interval) + " years";
+        return formatTimeAgoText(Math.floor(interval), "year");
     }
     interval = seconds / 2592000;
     if (interval > 1) {
-        return Math.floor(interval) + " months";
+        return formatTimeAgoText(Math.floor(interval), "month");
     }
     interval = seconds / 86400;
     if (interval > 1) {
-        return Math.floor(interval) + " days";
+        return formatTimeAgoText(Math.floor(interval), "day");
     }
     interval = seconds / 3600;
     if (interval > 1) {
-        return Math.floor(interval) + " hours";
+        return formatTimeAgoText(Math.floor(interval), "hour");
     }
     interval = seconds / 60;
     if (interval > 1) {
-        return Math.floor(interval) + " minutes";
+        return formatTimeAgoText(Math.floor(interval), "minute");
     }
-    return Math.floor(seconds) + " seconds";
+    return formatTimeAgoText(Math.floor(interval), "second");
+}
+
+function formatTimeAgoText(since: number, text: string) {
+    return since + ` ${text}${since !== 1 ? "s" : ""} ago`;
 }
 
 export function formatDate(unixSeconds: number): string {

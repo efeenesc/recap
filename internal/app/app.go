@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"embed"
+	"rcallport/internal/config"
 	"rcallport/internal/db"
 
 	"github.com/wailsapp/wails/v2"
@@ -27,10 +28,13 @@ type AppMethods struct {
 	CGetScreenshots              func(limit int) ([]db.CaptureScreenshotImage, error)
 	CGetReports                  func(limit int) ([]db.Report, error)
 	CGetScreenshotById           func(id int) (*db.CaptureScreenshotImage, error)
+	CGetScreenshotsNewerThan     func(timestamp int) ([]db.CaptureScreenshotImage, error)
+	CGetScreenshotsOlderThan     func(timestamp int, limit int) ([]db.CaptureScreenshotImage, error)
 	CGenerateReportWithSelectScr func(ids []int) (*int64, error)
 	CGetReportById               func(id int) (*db.Report, error)
-	CGetConfig                   func() (*db.AppConfig, error)
+	CGetConfig                   func() (*config.AppConfig, error)
 	CGetDisplayValues            func() map[string]db.SettingDisplayProps
+	CUpdateSettings              func(map[string]string) error
 }
 
 func NewApp() *App {
@@ -62,6 +66,8 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods) {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
+		MinWidth:  600,
+		MinHeight: 600,
 		Windows: &windows.Options{
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,

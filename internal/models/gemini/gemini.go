@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"rcallport/internal/config"
 	"strings"
@@ -22,7 +21,7 @@ type AIModel struct {
 	mu           sync.Mutex // Added mutex for thread-safety
 }
 
-// Start the ticker with 5-minute inactivity timeout for client closure.
+// Start the ticker with 5-minute inactivity timeout for client closure
 func (a *AIModel) startClientDeadline() {
 	// If the ticker is already running, just reset the ticker to restart the inactivity period
 	if a.clientTicker != nil {
@@ -54,7 +53,7 @@ func (a *AIModel) startClientDeadline() {
 	}()
 }
 
-// Joins all Gemini text response content (in chunks) into a single string.
+// Joins all Gemini text response content (in chunks) into a single string
 func joinContentToString(resp *genai.GenerateContentResponse) string {
 	var sb strings.Builder
 
@@ -69,7 +68,7 @@ func joinContentToString(resp *genai.GenerateContentResponse) string {
 	return sb.String()
 }
 
-// GenerateText sends a text generation request to the model with the given prompt.
+// Sends a text generation request to the model with the given prompt.
 func (a *AIModel) GenerateText(prompt string) (string, error) {
 	client, ctx := a.generateClient()
 	if client == nil {
@@ -87,7 +86,7 @@ func (a *AIModel) GenerateText(prompt string) (string, error) {
 	return joinContentToString(resp), nil
 }
 
-// DescribeScreenshot sends a single file for analysis
+// Sends a single file for analysis
 func (a *AIModel) DescribeScreenshot(fileName string, prompt string) (string, error) {
 	client, ctx := a.generateClient()
 	if client == nil {
@@ -98,7 +97,7 @@ func (a *AIModel) DescribeScreenshot(fileName string, prompt string) (string, er
 	return sendFileToGemini(client, ctx, a.model, fileName, prompt)
 }
 
-// DescribeBulkScreenshots sends multiple files for analysis
+// Sends multiple files for analysis
 func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (string, error) {
 	client, ctx := a.generateClient()
 	if client == nil {
@@ -120,10 +119,9 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 	return strings.Join(descriptions, "\n"), nil
 }
 
-// sendFileToGemini sends a file for analysis to the Gemini model
+// Sends a file for analysis to the Gemini model
 func sendFileToGemini(client *genai.Client, ctx context.Context, modelName string, fileName string, prompt string) (string, error) {
-	proot, _ := config.GetProjectRoot()
-	file, err := client.UploadFileFromPath(ctx, filepath.Join(proot, config.Config.System.ScreenshotPath, fileName), nil)
+	file, err := client.UploadFileFromPath(ctx, filepath.Join(config.Config.ScrPath, fileName), nil)
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +138,7 @@ func sendFileToGemini(client *genai.Client, ctx context.Context, modelName strin
 }
 
 // Initializes the genai client if it currently doesn't exist, or returns the existing client.
-// Remember to call a.startClientDeadline(). This sets a 5-minute timer before the client is stopped.
+// Remember to call a.startClientDeadline(). This sets a 5-minute timer before the client is stopped
 func (a *AIModel) generateClient() (*genai.Client, context.Context) {
 	ctx := context.Background()
 
@@ -148,7 +146,7 @@ func (a *AIModel) generateClient() (*genai.Client, context.Context) {
 	defer a.mu.Unlock()
 
 	if a.client == nil {
-		client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+		client, err := genai.NewClient(ctx, option.WithAPIKey(config.Config.GeminiAPIKey))
 		if err != nil {
 			log.Fatal(err)
 			return nil, ctx
