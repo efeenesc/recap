@@ -23,7 +23,7 @@
 
   function onWindowSizeChange() {
     carouselBounds = {
-      maxLeft: -(contentDiv.clientWidth * 0.82),
+      maxLeft: -(contentDiv.clientWidth * 0.85),
       maxRight: 0
     }
   }

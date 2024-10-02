@@ -44,7 +44,7 @@
                 <BackArrow strokeColor="#fff"></BackArrow>
             </div>
             <h1
-                class="page-title text-2xl -tracking-wide opacity-85 left-0 top-0 w-full z-20"
+                class="page-title text-2xl -tracking-wide opacity-85 left-0 top-0 w-1/2 z-20"
             >
                 Reports
             </h1>
@@ -65,13 +65,12 @@
                             >
                                 <div class="-mt-4">
                                     <MarkdownRenderer
-                                        parsedContent={parseMd(report.Content)
-                                            .content}
+                                        parsedContent={report.ParsedMarkdown}
                                     ></MarkdownRenderer>
                                 </div>
                             </div>
                             <h3 class="flex-shrink-0 pl-2 py-1">
-                                {report.Time}
+                                Generated at {report.Time}
                             </h3>
                             <!-- <div
                                 class="transition-box-content flex flex-col rounded-xl object-contain select-none pointer-events-none py-6 px-3"
@@ -90,7 +89,7 @@
                             <p class="whitespace-pre">
                                 Generated with <span
                                     class="whitespace-pre animated-text"
-                                    >Gemini 1.5 Flash</span
+                                    >{report.GenWithModel}</span
                                 >
                             </p>
                             <img

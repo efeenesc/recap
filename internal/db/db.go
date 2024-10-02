@@ -42,6 +42,8 @@ func createTable(db *sql.DB) error {
 		filename TEXT, 
 		thumbname TEXT, 
 		description TEXT, 
+		gen_with_api TEXT,
+		gen_with_model TEXT,
 		FOREIGN KEY(capt_id) REFERENCES captures(capture_id)
 	);
 	`
@@ -55,7 +57,9 @@ func createTable(db *sql.DB) error {
 	CREATE TABLE dailyreports (
 		report_id INTEGER NOT NULL PRIMARY KEY,
 		timestamp INTEGER NOT NULL,
-		content TEXT
+		content TEXT,
+		gen_with_api TEXT,
+		gen_with_model TEXT,
 	);
 	`
 

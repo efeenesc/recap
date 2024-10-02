@@ -46,6 +46,7 @@
         noReports = false;
         reports = res.map((r: any) => {
             r.Date = timeSinceUNIXSeconds(r.Timestamp);
+            r.ParsedMarkdown = parseMd(r.Content).content;
             return r;
         });
     }
@@ -103,7 +104,7 @@
                                     src={s.Screenshot}
                                 />
                                 <h3 class="flex-shrink-0 pl-2 py-1 self-end">
-                                    {s.Date}
+                                    Snapped {s.Date}
                                 </h3>
                             </div>
                         {/each}
@@ -143,13 +144,12 @@
                                 >
                                     <div class="-mt-4">
                                         <MarkdownRenderer
-                                            parsedContent={parseMd(r.Content)
-                                                .content}
+                                            parsedContent={r.ParsedMarkdown}
                                         ></MarkdownRenderer>
                                     </div>
                                 </div>
                                 <h3 class="flex-shrink-0 pl-2 py-1">
-                                    {r.Date}
+                                    Generated {r.Date}
                                 </h3>
                             </div>
                         {/each}

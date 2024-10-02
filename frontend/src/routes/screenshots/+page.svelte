@@ -2,37 +2,49 @@
     import gsap from "gsap";
     import { onDestroy, onMount } from "svelte";
     import type { DatedScreenshot } from "../../types/ExtendedScreenshot.interface.ts";
-    import { goto, afterNavigate } from "$app/navigation";
+    import { goto, afterNavigate, beforeNavigate } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
     import { get, writable } from "svelte/store";
     import Checkmark from "../../icons/Checkmark.svelte";
     import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
     import {
-        addScreenshotToStore,
         getScreenshotsNewerThan,
         getScreenshotsOlderThan,
     } from "../../utils/screenshot.ts";
-    import { dialogStore } from "$lib/stores/DialogStore.ts";
     import { GenerateReportFromScreenshotIds } from "$lib/wailsjs/go/app/AppMethods.js";
     import { addNewDialog } from "../../utils/dialog.ts";
     import { screenshotStore } from "$lib/stores/ScreenshotStore.ts";
+    import { scrollStore } from "$lib/stores/ScrollStore.ts";
+    import DoneAllIcon from "../../icons/DoneAllIcon.svelte";
+    import DoneIcon from "../../icons/DoneIcon.svelte";
 
     interface Data {
         streamed: {
             items: {
-                subscribe: (run: (value: DatedScreenshot) => void) => () => void;
+                subscribe: (
+                    run: (value: DatedScreenshot) => void
+                ) => () => void;
             };
         };
     }
 
-    let title: HTMLDivElement;
+    export let data: Data;
+
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
     let prevId: number | undefined;
     let selecting: boolean = false;
     const rcvScr = writable<DatedScreenshot | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
-    export let data: Data;
+
+    let scrollTop: number = 0;
+    let titleBackgroundOpacity: boolean = false;
+
+    $: {
+        if (scrollTop) {
+            titleBackgroundOpacity = scrollTop > 100 ? true : false;
+        }
+    }
 
     async function getData(): Promise<DatedScreenshot> {
         return new Promise((resolve) => {
@@ -83,10 +95,6 @@
     function subscribeToScreenshotEvent() {
         EventsOn("rcv:screenshotran", async (lastId) => {
             addNewScreenshots();
-            addNewDialog({
-                title: "New item added",
-                description: `New screenshot ID: ${lastId}`,
-            });
         });
     }
 
@@ -131,6 +139,10 @@
     });
 
     onMount(() => {
+        const subscr = scrollStore.subscribe(
+            (scrollPos) => (scrollTop = scrollPos)
+        );
+
         loadMoreDivObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -144,6 +156,10 @@
         ); // Trigger when 10% of the element is visible
 
         subscribeToScreenshotEvent();
+
+        return () => {
+            subscr();
+        }; // Unsubscribe from scrollStore when destroying
     });
 
     $: if (loadMoreDiv) {
@@ -320,10 +336,13 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
     <div class="pb-2 gap-5 flex flex-col">
-        <div class="pt-10 sticky left-0 top-0 z-30 flex">
+        <div
+            class="top-gradient-bg {titleBackgroundOpacity
+                ? 'after:opacity-100'
+                : 'after:opacity-0'} pt-10 sticky left-0 top-0 z-30 flex justify-between"
+        >
             <h1
-                bind:this={title}
-                class="page-title text-2xl -tracking-wide opacity-85 w-full"
+                class="page-title text-2xl -tracking-wide opacity-85 w-1/2 z-40 pointer-events-none"
             >
                 Screenshots
             </h1>
@@ -364,7 +383,7 @@
                 {#each Object.entries($rcvScr) as [date, screenshots]}
                     <div>
                         <div
-                            class="flex gap-5 sticky items-center top-[74px] z-20"
+                            class="flex gap-5 sticky items-center top-16 z-30 pointer-events-none"
                         >
                             <h2 class="text-3xl font-bold tracking-wider">
                                 {date}
@@ -408,6 +427,16 @@
                                             </div>
                                         {/if}
 
+                                        <div class="absolute top-2 right-2 w-6 h-6">
+                                            {#if s.Description}
+                                                {#if s.ReportID}
+                                                    <DoneAllIcon strokeColor="#0f0"></DoneAllIcon>
+                                                {:else}
+                                                    <DoneIcon strokeColor="#0f0"></DoneIcon>
+                                                {/if}
+                                            {/if}
+                                        </div>
+
                                         <img
                                             alt="screenshot"
                                             on:load|once={() =>
@@ -418,7 +447,7 @@
                                         />
 
                                         <h3 class="flex-shrink-0 pt-1 pl-2">
-                                            {s.Time}
+                                            Snapped at {s.Time}
                                         </h3>
                                     </div>
                                 </div>
@@ -440,4 +469,21 @@
     @tailwind utilities;
     @tailwind components;
     @tailwind base;
+
+    .top-gradient-bg::after {
+        display: block;
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100px;
+        right: -100px;
+        height: 200px;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(
+            180deg,
+            rgb(0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
 </style>

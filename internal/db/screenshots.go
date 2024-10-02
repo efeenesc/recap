@@ -49,11 +49,13 @@ func InsertCapture(db *sql.DB, scrFullThumbPairs []FullThumbScrPair) int64 {
 
 // Updates the description of a specific screenshot identified by its ID.
 // Returns the result of the update operation or an error if the operation fails
-func UpdateScreenshotDescription(db *sql.DB, screenshot_id int, description string) (sql.Result, error) {
+func UpdateScreenshotDescription(db *sql.DB, screenshot_id int, description string, genWithApi string, genWithModel string) (sql.Result, error) {
 	return db.Exec(`
 	UPDATE screenshots
-	SET description = ? 
-	WHERE screenshot_id = ?`, description, screenshot_id)
+	SET description = ?,
+	gen_with_api = ?,
+	gen_with_model = ?,
+	WHERE screenshot_id = ?`, description, genWithApi, genWithModel, screenshot_id)
 }
 
 // Inserts one or multiple screenshot records into the database within a transaction,
@@ -137,7 +139,8 @@ func GetUnprocessedCaptures(db *sql.DB) ([]CaptureScreenshot, error) {
 		c.timestamp, 
 		s.screenshot_id, 
 		s.filename, 
-		s.description
+		s.description,
+		c.r_id
 	FROM 
 		captures c
 	INNER JOIN 
@@ -161,6 +164,7 @@ func GetUnprocessedCaptures(db *sql.DB) ([]CaptureScreenshot, error) {
 			&cs.ScreenshotID,
 			&cs.Filename,
 			&cs.Description,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -184,7 +188,10 @@ func GetScreenshotsNewerThan(id int) ([]CaptureScreenshotImage, error) {
 			c.timestamp, 
 			s.description,
 			s.filename,
-			s.thumbname
+			s.thumbname,
+			s.gen_with_api,
+			s.gen_with_model,
+			c.r_id
 		FROM 
 			captures c
 		INNER JOIN 
@@ -210,6 +217,9 @@ func GetScreenshotsNewerThan(id int) ([]CaptureScreenshotImage, error) {
 			&cs.Description,
 			&cs.Filename,
 			&cs.Thumbname,
+			&cs.GenWithApi,
+			&cs.GenWithModel,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -242,7 +252,10 @@ func GetScreenshotsOlderThan(id int, limit int) ([]CaptureScreenshotImage, error
 			c.timestamp, 
 			s.description,
 			s.filename,
-			s.thumbname
+			s.thumbname,
+			s.gen_with_api,
+			s.gen_with_model,
+			c.r_id
 		FROM 
 			captures c
 		INNER JOIN 
@@ -269,6 +282,9 @@ func GetScreenshotsOlderThan(id int, limit int) ([]CaptureScreenshotImage, error
 			&cs.Description,
 			&cs.Filename, // Make sure 'cs.Screenshot' matches the correct field name/type
 			&cs.Thumbname,
+			&cs.GenWithApi,
+			&cs.GenWithModel,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -298,7 +314,10 @@ func getLastScreenshots(db *sql.DB, limit int) ([]CaptureScreenshotImage, error)
 			c.timestamp, 
 			s.description,
 			s.filename,
-			s.thumbname
+			s.thumbname,
+			s.gen_with_api,
+			s.gen_with_model,
+			c.r_id
 		FROM 
 			captures c
 		INNER JOIN 
@@ -323,6 +342,9 @@ func getLastScreenshots(db *sql.DB, limit int) ([]CaptureScreenshotImage, error)
 			&cs.Description,
 			&cs.Filename, // Make sure 'cs.Screenshot' matches the correct field name/type
 			&cs.Thumbname,
+			&cs.GenWithApi,
+			&cs.GenWithModel,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -374,7 +396,10 @@ func GetScreenshotById(id int) (*CaptureScreenshotImage, error) {
 			c.timestamp, 
 			s.description,
 			s.filename,
-			s.thumbname
+			s.thumbname,
+			s.gen_with_api,
+			s.gen_with_model,
+			c.r_id
 		FROM 
 			captures c
 		INNER JOIN 
@@ -399,6 +424,9 @@ func GetScreenshotById(id int) (*CaptureScreenshotImage, error) {
 			&cs.Description,
 			&cs.Filename,
 			&cs.Thumbname,
+			&cs.GenWithApi,
+			&cs.GenWithModel,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -431,7 +459,8 @@ func GetScreenshotByIds(db *sql.DB, ids []int) ([]CaptureScreenshot, error) {
 			c.timestamp, 
 			s.description,
 			s.filename,
-			s.thumbname
+			s.thumbname,
+			c.r_id
 		FROM 
 			captures c
 		INNER JOIN 
@@ -463,6 +492,7 @@ func GetScreenshotByIds(db *sql.DB, ids []int) ([]CaptureScreenshot, error) {
 			&cs.Description,
 			&cs.Filename,
 			&cs.Thumbname,
+			&cs.ReportID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)

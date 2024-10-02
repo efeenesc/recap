@@ -9,6 +9,9 @@ type CaptureScreenshotImage struct {
 	Thumbname    *string `json:"Thumbname"`
 	Description  *string `json:"Description"`
 	Screenshot   string  `json:"Screenshot"`
+	GenWithApi   *string `json:"GenWithApi"`
+	GenWithModel *string `json:"GenWithModel"`
+	ReportID     *int    `json:"ReportID"`
 }
 
 // Contains description of screen capture along with other properties. Thumbname contains the thumbnail's filename
@@ -19,6 +22,9 @@ type CaptureScreenshot struct {
 	Filename     string
 	Thumbname    *string
 	Description  *string
+	GenWithApi   *string
+	GenWithModel *string
+	ReportID     *int
 }
 
 // Basic properties of a screen capture
@@ -30,7 +36,9 @@ type CaptureDescription struct {
 
 // Contains the report's content, ID, and UNIX second timestamp
 type Report struct {
-	ReportID  int    `json:"ReportID"`
-	Timestamp int    `json:"Timestamp"`
-	Content   string `json:"Content"`
+	ReportID     int    `json:"ReportID"`
+	Timestamp    int    `json:"Timestamp"`
+	Content      string `json:"Content"`
+	GenWithApi   string `json:"GenWithApi"`
+	GenWithModel string `json:"GenWithModel"`
 }

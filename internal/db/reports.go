@@ -11,7 +11,7 @@ import (
 Logs the daily report by first inserting a row into 'dailyreports', then getting the last inserted row
 and updating all rows in 'captures' which were used to generate the Daily Report.
 */
-func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription) (*int64, error) {
+func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription, genWithApi string, genWithModel string) (*int64, error) {
 	if db == nil {
 		db, err := CreateConnection()
 		if err != nil {
@@ -31,9 +31,9 @@ func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription) (*
 
 	// Insert the daily report
 	res, err := db.Exec(`
-		INSERT INTO dailyreports (timestamp, content)
-		VALUES (?, ?)`,
-		time.Now().UTC().Unix(), reportText)
+		INSERT INTO dailyreports (timestamp, content, gen_with_api, gen_with_model)
+		VALUES (?, ?, ?, ?)`,
+		time.Now().UTC().Unix(), reportText, genWithApi, genWithModel)
 
 	if err != nil {
 		fmt.Printf("Error logging daily report: %v\n", err)
@@ -95,6 +95,8 @@ func GetReports(limit int) ([]Report, error) {
 			&r.ReportID,
 			&r.Timestamp,
 			&r.Content,
+			&r.GenWithApi,
+			&r.GenWithModel,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
@@ -130,6 +132,8 @@ func GetReportById(id int) (*Report, error) {
 			&rep.ReportID,
 			&rep.Timestamp,
 			&rep.Content,
+			&rep.GenWithApi,
+			&rep.GenWithModel,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)

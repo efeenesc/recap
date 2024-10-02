@@ -12,6 +12,8 @@
     import { addNewDialog } from "../../utils/dialog.ts";
     import RevertIcon from "../../icons/RevertIcon.svelte";
     import { beforeNavigate, goto } from "$app/navigation";
+    import { onMount } from "svelte";
+    import { scrollStore } from "$lib/stores/ScrollStore.ts";
 
     interface Data {
         streamed: {
@@ -25,6 +27,14 @@
     let changedSettings: BasicSetting = {};
     let allowPageChange: boolean = false;
     let wereSettingsChanged: boolean = false;
+    let scrollTop: number = 0;
+    let titleBackgroundOpacity: boolean = false;
+
+    $: {
+        if (scrollTop) {
+            titleBackgroundOpacity = scrollTop > 100 ? true : false;
+        }
+    }
 
     async function getData(): Promise<CategorizedSettings | undefined> {
         let items = undefined;
@@ -180,14 +190,30 @@
             });
         }
     });
+
+    onMount(() => {
+        const unsubscribe = scrollStore.subscribe(
+            (scrollVal) => (scrollTop = scrollVal)
+        );
+
+        return () => {
+            unsubscribe();
+        }; // Unsubscribe from this mistake of a store
+    });
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
     <div class="pb-2 gap-5 flex flex-col">
-        <div class="pt-10 sticky left-0 top-0 z-30 flex">
-            <h1 class="page-title text-2xl -tracking-wide opacity-85 w-full">
+        <div
+            class="top-gradient-bg {titleBackgroundOpacity
+                ? 'after:opacity-100'
+                : 'after:opacity-0'} pt-10 sticky left-0 top-0 z-30 flex justify-between"
+        >
+            <h1
+                class="page-title w-1/2 text-2xl -tracking-wide opacity-85 z-40"
+            >
                 Settings
             </h1>
             <div
@@ -211,7 +237,7 @@
                 {#each Object.keys($newSet) as cat}
                     <div class="flex flex-col my-2">
                         <!-- Category title -->
-                        <div class="flex flex-col top-16 sticky z-20">
+                        <div class="flex flex-col top-16 sticky z-40">
                             <h1 class="category font-bold text-3xl mb-4">
                                 {cat}
                             </h1>
@@ -268,4 +294,20 @@
     @tailwind utilities;
     @tailwind components;
     @tailwind base;
+
+    .top-gradient-bg::after {
+        display: block;
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100px;
+        right: -100px;
+        height: 200px;
+        z-index: 1;
+        background: linear-gradient(
+            180deg,
+            rgb(0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
 </style>

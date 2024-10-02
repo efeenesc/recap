@@ -11,6 +11,7 @@
     import { addNewDialog } from "../../utils/dialog.ts";
     import MarkdownRenderer from "../../components/markdown-renderer/MarkdownRenderer.svelte";
     import { lex, parse } from "$lib/markdown/MarkdownParser.ts";
+    import { scrollStore } from "$lib/stores/ScrollStore.ts";
 
     interface Data {
         streamed: {
@@ -18,12 +19,21 @@
         };
     }
 
-    let title: HTMLDivElement;
-    let prevId: number | undefined;
+    export let data: Data;
+
     let selecting: boolean = false;
     const rcvRep = writable<DatedReport | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
-    export let data: Data;
+    
+    let scrollTop: number = 0;
+    let titleBackgroundOpacity: boolean = false;
+
+    $: {
+        console.log(scrollTop);
+        if (scrollTop) {
+            titleBackgroundOpacity = scrollTop > 100 ? true : false;
+        }
+    }
 
     function parseMd(content: string) {
         const parsed = parse(lex(content));
@@ -68,6 +78,7 @@
     });
 
     onMount(() => {
+        const subscr = scrollStore.subscribe(scrollPos => scrollTop = scrollPos);
         subscribeToReportEvent();
     });
 
@@ -203,15 +214,11 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
     <div class="pb-2 gap-5 flex flex-col">
-        <div class="pt-10 sticky left-0 top-0 z-30 flex">
+        <div class="top-gradient-bg { titleBackgroundOpacity ? "after:opacity-100" : "after:opacity-0" } pt-10 sticky left-0 top-0 z-30 flex justify-between">
             <h1
-                bind:this={title}
-                class="page-title text-2xl -tracking-wide opacity-85 w-full"
+                class="page-title text-2xl -tracking-wide opacity-85 w-1/2 z-40 pointer-events-none"
             >
-                <span class="z-50">
-                    Reports
-                </span>
-                
+                Reports
             </h1>
             <div
                 class="flex gap-2 justify-self-end -tracking-wide text-xl z-30 text-black font-semibold"
@@ -242,7 +249,7 @@
                 {#each Object.entries($rcvRep) as [date, reports]}
                     <div>
                         <div
-                            class="flex gap-5 sticky items-center top-[74px] z-20"
+                            class="flex gap-5 sticky items-center top-16 z-40 pointer-events-none"
                         >
                             <h2 class="text-3xl font-bold tracking-wider">
                                 {date}
@@ -287,17 +294,16 @@
                                         {/if}
 
                                         <div
-                                            class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
+                                            class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
                                         >
                                             <div class="-mt-4">
                                                 <MarkdownRenderer
-                                                    parsedContent={parseMd(r.Content)
-                                                        .content}
+                                                    parsedContent={r.ParsedMarkdown}
                                                 ></MarkdownRenderer>
                                             </div>
                                         </div>
                                         <h3 class="flex-shrink-0 pl-2 py-1">
-                                            {r.Time}
+                                            Generated at {r.Time}
                                         </h3>
                                     </div>
                                 </div>
@@ -318,4 +324,17 @@
     @tailwind utilities;
     @tailwind components;
     @tailwind base;
+
+    .top-gradient-bg::after {
+        display: block;
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100px;
+        right: -100px;
+        height: 200px;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+    }
 </style>

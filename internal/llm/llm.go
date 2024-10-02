@@ -60,7 +60,7 @@ func GenerateDailyReport() (*int64, error) {
 		// return nil, err
 	}
 
-	return db.LogDailyReport(dbCl, res, todayCaps)
+	return db.LogDailyReport(dbCl, res, todayCaps, config.Config.ReportAPI, config.Config.ReportModel)
 }
 
 // Generates a report using a selected list of screenshot IDs.
@@ -112,7 +112,7 @@ func GenerateReportWithSelectScr(ids []int) (*int64, error) {
 	}
 
 	log.Println("Logging report")
-	return db.LogDailyReport(dbCl, res, descs)
+	return db.LogDailyReport(dbCl, res, descs, config.Config.ReportAPI, config.Config.ReportModel)
 }
 
 // Processes a batch of screenshot captures to generate descriptions.
@@ -129,7 +129,8 @@ func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.Captur
 	}
 
 	if scrs == nil {
-		return nil, fmt.Errorf("input slice of CaptureScreenshot is nil")
+		fmt.Printf("input slice of CaptureScreenshot is nil, returning nil. Everything good")
+		return nil, nil
 	}
 
 	var returnQ []db.CaptureDescription
@@ -162,7 +163,7 @@ func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.Captur
 
 			fmt.Printf("Processed capture ID %d: %s\n", cap.CaptureID, truncateString(newDescObj.Description, 50))
 
-			if _, err := db.UpdateScreenshotDescription(dbCl, cap.CaptureID, res); err != nil {
+			if _, err := db.UpdateScreenshotDescription(dbCl, cap.CaptureID, res, config.Config.DescGenAPI, config.Config.DescGenModel); err != nil {
 				log.Printf("Error updating description for capture %d: %v", cap.CaptureID, err)
 			}
 		}
@@ -227,7 +228,7 @@ func SendQueue() {
 			}
 
 			// Update the database with the Gemini response
-			_, err = db.UpdateScreenshotDescription(dbCl, cap.CaptureID, res)
+			_, err = db.UpdateScreenshotDescription(dbCl, cap.CaptureID, res, config.Config.DescGenAPI, config.Config.DescGenModel)
 			if err != nil {
 				fmt.Printf("Error updating description for capture %d: %v\n", cap.CaptureID, err)
 			}
