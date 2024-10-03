@@ -2,6 +2,9 @@
     import type { ExtendedScreenshot } from "../../../types/ExtendedScreenshot.interface.ts";
     import { beforeNavigate, goto } from "$app/navigation";
     import BackArrow from "../../../icons/BackArrow.svelte";
+    import XIcon from "../../../icons/XIcon.svelte";
+    import DoneAllIcon from "../../../icons/DoneAllIcon.svelte";
+    import DoneIcon from "../../../icons/DoneIcon.svelte";
 
     interface Data {
         streamed: {

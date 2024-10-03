@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import ClipboardIcon from "../../icons/ClipboardIcon.svelte";
     import ScreenshotIcon from "../../icons/ScreenshotIcon.svelte";
     import SettingsIcon from "../../icons/SettingsIcon.svelte";
@@ -8,6 +8,7 @@
     import Toggle from "../checkbox/Toggle.svelte";
     import { goto } from '$app/navigation'
     import HomeIcon from "../../icons/HomeIcon.svelte";
+    import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
     
     let currentRoute: string;
     let scrTimer: boolean = true;
@@ -61,7 +62,18 @@
 
     onMount(() => {
         window.addEventListener("resize", onResize);
+        EventsOn("rcv:llmstate", (newState: boolean) => {
+            llmTimer = newState;
+        })
+        EventsOn("rcv:screenshotstate", (newState: boolean) => {
+            scrTimer = newState;
+        })
         onResize();
+
+        // During destroy:
+        return () => {
+            EventsOff("rcv:llmstate", "rcv:screenshotstate")
+        }
     });
 
     function routeClicked(path: string) {

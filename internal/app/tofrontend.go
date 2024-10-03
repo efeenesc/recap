@@ -9,21 +9,21 @@ func (a *App) SendMessage(msg *string) {
 		defaultMsg := ""
 		msg = &defaultMsg
 	}
-	runtime.EventsEmit(*wailsContext, *msg)
+	runtime.EventsEmit(*WailsContext, *msg)
 }
 
 func (a *App) SendScreenshotRanMessage(lastId int64) {
-	runtime.EventsEmit(*wailsContext, "rcv:screenshotran", lastId)
+	runtime.EventsEmit(*WailsContext, "rcv:screenshotran", lastId)
 }
 
 func (a *App) SendLLMRanMessage(lastId int64) {
-	runtime.EventsEmit(*wailsContext, "rcv:llmran", lastId)
+	runtime.EventsEmit(*WailsContext, "rcv:llmran", lastId)
 }
 
 func (a *App) SendScreenshotStateMessage(newState bool) {
-	runtime.EventsEmit(*wailsContext, "rcv:screenshotstate", newState)
+	runtime.EventsEmit(*WailsContext, "rcv:screenshotstate", newState)
 }
 
 func (a *App) SendLLMStateMessage(newState bool) {
-	runtime.EventsEmit(*wailsContext, "rcv:llmstate", newState)
+	runtime.EventsEmit(*WailsContext, "rcv:llmstate", newState)
 }

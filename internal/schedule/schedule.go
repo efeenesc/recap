@@ -92,6 +92,8 @@ func SetLLMScheduleState(state bool) {
 	} else {
 		llmTimer.stop()
 	}
+
+	app.AppInstance.SendLLMStateMessage(state)
 }
 
 // Enables or disables the screenshot schedule based on the provided state.
@@ -102,6 +104,8 @@ func SetScrScheduleState(state bool) {
 	} else {
 		screenshotTimer.stop()
 	}
+
+	app.AppInstance.SendScreenshotStateMessage(state)
 }
 
 // Returns the running state of the screenshot and LLM timers. Used by frontend

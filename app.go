@@ -17,12 +17,16 @@ func addBindings() *app.AppMethods {
 	methods.CSetLLMTimer = schedule.SetLLMScheduleState
 	methods.CSetScrTimer = schedule.SetScrScheduleState
 	methods.CGetScreenshots = db.GetScreenshots
-	methods.CGetReports = db.GetReports
 	methods.CGetScreenshotById = db.GetScreenshotById
 	methods.CGetScreenshotsNewerThan = db.GetScreenshotsNewerThan
 	methods.CGetScreenshotsOlderThan = db.GetScreenshotsOlderThan
+	methods.CDeleteScreenshotsById = db.DeleteScreenshotsById
 	methods.CGenerateReportWithSelectScr = llm.GenerateReportWithSelectScr
+	methods.CGetReports = db.GetReports
 	methods.CGetReportById = db.GetReportById
+	methods.CGetReportsNewerThan = db.GetReportsNewerThan
+	methods.CGetReportsOlderThan = db.GetReportsOlderThan
+	methods.CDeleteReportsById = db.DeleteReportsById
 	methods.CGetConfig = db.LoadConfig
 	methods.CGetDisplayValues = db.GetDisplayValues
 	methods.CUpdateSettings = db.UpdateSettings

@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { reportStore } from '$lib/stores/ReportStore.ts';
     import gsap from "gsap";
     import type { DatedReport } from "../../types/ExtendedReport.interface.ts";
-    import { writable } from "svelte/store";
+    import { get, writable } from "svelte/store";
     import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
-    import { addReportToStore } from "../../utils/report.ts";
+    import { addReportToStore, getReportsNewerThan, getReportsOlderThan } from "../../utils/report.ts";
     import { onDestroy, onMount } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
@@ -12,10 +13,15 @@
     import MarkdownRenderer from "../../components/markdown-renderer/MarkdownRenderer.svelte";
     import { lex, parse } from "$lib/markdown/MarkdownParser.ts";
     import { scrollStore } from "$lib/stores/ScrollStore.ts";
+    import { DeleteReportsById } from "$lib/wailsjs/go/app/AppMethods.js"
 
     interface Data {
         streamed: {
-            items: Promise<DatedReport | undefined>;
+            items: {
+                subscribe: (
+                    run: (value: DatedReport) => void
+                ) => () => void;
+            };
         };
     }
 
@@ -24,9 +30,14 @@
     let selecting: boolean = false;
     const rcvRep = writable<DatedReport | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
+
+    let loadMoreDiv: Element;
+    let loadMoreDivObserver: IntersectionObserver;
     
     let scrollTop: number = 0;
     let titleBackgroundOpacity: boolean = false;
+
+    let allReportsLoaded: boolean = false;
 
     $: {
         console.log(scrollTop);
@@ -35,21 +46,14 @@
         }
     }
 
-    function parseMd(content: string) {
-        const parsed = parse(lex(content));
-        return parsed;
-    }
-
-    async function getData(): Promise<DatedReport | undefined> {
-        try {
-            const items = await data.streamed.items;
-            rcvRep.set(items);
-            setTimeout(() => animateLoadForAllDivs(), 100);
-            return items;
-        } catch (err) {
-            console.error(err);
-            rcvRep.set(undefined);
-        }
+    async function getData(): Promise<DatedReport> {
+        return new Promise((resolve) => {
+            data.streamed.items.subscribe((items) => {
+                rcvRep.set(items);
+                setTimeout(() => animateLoadForAllDivs(), 100);
+                resolve(items);
+            });
+        });
     }
 
     function animateLoadForAllDivs() {
@@ -61,25 +65,100 @@
         });
     }
 
-    function subscribeToReportEvent() {
-        EventsOn("rcv:llmran", async (lastId) => {
-            await addReportToStore(lastId);
-            addNewDialog({
-                title: "New item added",
-                description: `New report ID: ${lastId}`,
-                primaryButtonCallback: () => goto(`/reports/${lastId}`),
-                primaryButtonName: "Open report",
+    async function addNewReports() {
+        let newestKnown = 0;
+        const allScr = get(rcvRep);
+
+        if (allScr) {
+            const newestKey = Object.keys(allScr)[0];
+            allScr[newestKey].forEach((scr) => {
+                if (scr.ReportID > newestKnown) newestKnown = scr.ReportID;
             });
+        }
+
+        const newReports = await getReportsNewerThan(newestKnown);
+        if (!newReports) return;
+
+        reportStore.update((prev) => {
+            if (!prev) return prev;
+
+            return [...newReports, ...prev];
         });
+    }
+
+    function subscribeToReportEvent() {
+        EventsOn("rcv:llmran", async () => {
+            await addNewReports();
+        });
+    }
+
+    async function getOlderReports() {
+        let oldestKnownId: number | undefined;
+        const allReports = get(rcvRep);
+
+        if (allReports && typeof allReports === "object") {
+            const reportArrays = Object.values(allReports);
+            if (reportArrays.length > 0) {
+                const flatScreenshots = reportArrays.flat();
+                oldestKnownId = Math.min(
+                    ...flatScreenshots.map((scr) => scr.ReportID)
+                );
+            }
+        }
+
+        if (oldestKnownId === undefined) {
+            console.log("No existing screenshots found");
+            return;
+        }
+
+        try {
+            const newReports = await getReportsOlderThan(
+                oldestKnownId,
+                30
+            );
+
+            if (newReports === null || newReports.length === 0) {
+                allReportsLoaded = true;
+                return;
+            }
+
+            reportStore.update((prev) => {
+                if (!Array.isArray(prev)) return newReports;
+                return [...prev, ...newReports];
+            });
+        } catch (error) {
+            console.error("Error fetching older screenshots:", error);
+        }
     }
 
     onDestroy(() => {
         EventsOff("rcv:llmran");
+        try {
+            loadMoreDivObserver.disconnect();
+        } catch (err: any) {
+            console.log("loadMoreDivObserver was already unsubscribed from. Continuing...")
+        }
     });
 
+    $: if (loadMoreDiv) {
+        loadMoreDivObserver.observe(loadMoreDiv);
+    }
+
     onMount(() => {
-        const subscr = scrollStore.subscribe(scrollPos => scrollTop = scrollPos);
+        const unsubscribe = scrollStore.subscribe(scrollPos => scrollTop = scrollPos);
         subscribeToReportEvent();
+        loadMoreDivObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        getOlderReports();
+                    }
+                });
+            },
+            { threshold: 0.1 }
+        ); // Trigger when 10% of the element is visible
+
+        return () => {unsubscribe()}
     });
 
     function selectAllFromDate(event: any, date: string) {
@@ -208,6 +287,55 @@
             ease: "expo.out",
         });
     }
+
+    /**
+     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2 
+     */
+     async function deleteSelectedStep1() {
+        const allScrs = get(rcvRep);
+        if (!allScrs) return;
+
+        const selectedIds: number[] = [];
+        Object.keys(allScrs).forEach((key) =>
+            allScrs[key].map((scr) => {
+                if (scr.Selected === true) {
+                    selectedIds.push(scr.ReportID);
+                }
+            })
+        );
+
+        try {
+            addNewDialog({
+                title: "Confirmation",
+                description: `${selectedIds.length} report${selectedIds.length !== 1 ? 's' : ''} will be deleted. Are you sure you want to proceed?`,
+                primaryButtonName: "Delete",
+                primaryButtonCallback: async () => await deleteSelectedStep2(selectedIds),
+                secondaryButtonName: "Cancel",
+                secondaryButtonCallback: () => console.log("Cancelled")
+            });
+        } catch (err) {
+            console.error(err);
+            addNewDialog({
+                title: "Report generation failed",
+                description: `The following error was received: ${err}`,
+            });
+        }
+    }
+
+    async function deleteSelectedStep2(ids: number[]) {
+        try {
+            await DeleteReportsById(ids);
+            reportStore.update(prev => {
+                const filtered = prev.filter(r => !ids.includes(r.ReportID))
+                return filtered
+            })
+        } catch (err: any) {
+            addNewDialog({
+                title: "Error",
+                description: `Could not delete screenshots with the following error: ${err}`
+            })
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -311,6 +439,11 @@
                         </div>
                     </div>
                 {/each}
+                {#if !allReportsLoaded}
+                    <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
+                {:else}
+                    <div></div>
+                {/if}
             {:else}
                 No reports yet
             {/if}

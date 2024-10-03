@@ -1,5 +1,5 @@
 import { reportStore } from "$lib/stores/ReportStore.ts";
-import { GetReports, GetReportById } from "$lib/wailsjs/go/app/AppMethods.js";
+import { GetReports, GetReportById, GetReportsNewerThan, GetReportsOlderThan } from "$lib/wailsjs/go/app/AppMethods.js";
 import type { db } from "$lib/wailsjs/go/models.ts";
 import type { ExtendedReport } from "../types/ExtendedReport.interface.ts";
 
@@ -26,6 +26,20 @@ export const getReportById = async (
     const processed = processReports([res]);
     return processed[0];
 };
+
+export const getReportsOlderThan = async (id: number, limit: number) => {
+    const res = await GetReportsOlderThan(id, limit);
+    console.log(res);
+    const processed = processReports(res);
+    return processed;
+}
+
+export const getReportsNewerThan = async (id: number) => {
+    const res = await GetReportsNewerThan(id);
+    if (!res) return null;
+    const processed = processReports(res);
+    return processed;
+}
 
 export const addReportToStore = async (
     id: number

@@ -85,7 +85,7 @@ func createTable(db *sql.DB) error {
 
 func CreateConnection() (*sql.DB, error) {
 	proot, _ := config.GetProjectRoot()
-	db, err := sql.Open("sqlite3", path.Join(proot, "sqlite.db"))
+	db, err := sql.Open("sqlite3", path.Join(proot, "rcallport.db"))
 
 	if err != nil {
 		log.Fatal(err)

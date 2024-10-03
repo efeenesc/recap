@@ -41,20 +41,26 @@ body {
 
 ::view-transition-old(:root)
 ::view-transition-new(:root)
-::view-transition-old(.page-container)
-::view-transition-new(.page-container)
+::view-transition-old(page-container)
+::view-transition-new(page-container)
+::view-transition-old(exclude-transition)
+::view-transition-new(exclude-transition)
 ::view-transition-old(*)
 ::view-transition-new(*) {
     animation: none;
 }
 
-::view-transition-old(.page-title)
-::view-transition-new(.page-title)
-::view-transition-old(.transition-box-container)
-::view-transition-new(.transition-box-container)
-::view-transition-old(.transition-box-content)
-::view-transition-new(.transition-box-content) {
+::view-transition-old(page-title)
+::view-transition-new(page-title)
+::view-transition-old(transition-box-container)
+::view-transition-new(transition-box-container)
+::view-transition-old(transition-box-content)
+::view-transition-new(transition-box-content) {
     animation: -ua-mix-blend-mode-plus-lighter;
+}
+
+.exclude-transition {
+    view-transition-name: exclude-transition;
 }
 
 .page-title {

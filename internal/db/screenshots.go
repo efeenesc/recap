@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"path"
+	"rcallport/internal/config"
 	"rcallport/internal/utils"
 	"time"
 )
@@ -506,4 +509,56 @@ func GetScreenshotByIds(db *sql.DB, ids []int) ([]CaptureScreenshot, error) {
 	}
 
 	return results, nil
+}
+
+func DeleteScreenshotsById(ids []int) error {
+	dbCl, err := CreateConnection()
+	if err != nil {
+		return fmt.Errorf("could not connect to DB: %v", err)
+	}
+	defer dbCl.Close()
+
+	scrs, err := GetScreenshotByIds(dbCl, ids)
+	if err != nil {
+		return err
+	}
+
+	for _, scr := range scrs {
+		if scr.Filename != "" {
+			os.Remove(path.Join(config.Config.ScrPath, scr.Filename))
+		}
+
+		if scr.Thumbname != nil {
+			os.Remove(path.Join(config.Config.ScrPath, *scr.Thumbname))
+		}
+	}
+
+	questionMarks := generateNumOfQuestionMarks(len(ids))
+	screenshotsQuery := fmt.Sprintf(`
+		DELETE FROM screenshots
+		WHERE capt_id IN (%s)
+	`, questionMarks)
+
+	capturesQuery := fmt.Sprintf(`
+		DELETE FROM captures
+		WHERE capture_id IN (%s)
+	`, questionMarks)
+
+	// Create a slice for the query arguments
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+
+	_, err = dbCl.Exec(screenshotsQuery, args...)
+	if err != nil {
+		return fmt.Errorf("error deleting screenshots: %v", err)
+	}
+
+	_, err = dbCl.Exec(capturesQuery, args...)
+	if err != nil {
+		return fmt.Errorf("error deleting captures: %v", err)
+	}
+
+	return nil
 }

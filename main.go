@@ -4,6 +4,7 @@ import (
 	"rcallport/internal/db"
 	"rcallport/internal/llm"
 	"rcallport/internal/schedule"
+	"rcallport/internal/tray"
 )
 
 func addDbInitializers() *db.InitializerCallbacks {
@@ -21,6 +22,10 @@ func main() {
 	llm.Initialize() // Setup LLM (text, vision) connectors from config
 
 	schedule.Initialize() // Start the schedule in which timers are configured for automatic screenshots and vision processing
+
+	go func() {
+		tray.Initialize()
+	}()
 
 	createApp()
 }

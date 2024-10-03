@@ -3,7 +3,7 @@
 
 ## Description
 
-A take on the idea of Microsoft Recall with the purpose of generating reports of user activity.
+A take on the idea of Microsoft Recall with the purpose of generating reports of user activity, written in Go.
 
 With its default configuration, it captures a screenshot of all displays every 5 minutes. Every 2 hours, all unprocessed screenshots are sent to the user's preferred vision model to process them and describe the user's activity.
 

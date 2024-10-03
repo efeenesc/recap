@@ -8,4 +8,4 @@ frontend/build
 *.d.ts
 frontend/src/lib/wailsjs
 build
-sqlite.db
+rcallport.db

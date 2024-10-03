@@ -70,6 +70,87 @@ func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription, ge
 	return &drId, nil
 }
 
+func GetReportsNewerThan(id int) ([]Report, error) {
+	dbCl, err := CreateConnection()
+	if err != nil {
+		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+	}
+	defer dbCl.Close()
+
+	rows, err := dbCl.Query(`
+		SELECT * FROM dailyreports
+		WHERE 
+			report_id > (?)
+		ORDER BY 
+			timestamp DESC
+	`, id)
+
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err) // Return error instead of log.Fatal
+	}
+	defer rows.Close() // Always close the rows after use
+
+	var results []Report
+
+	for rows.Next() {
+		var r Report
+		err := rows.Scan(
+			&r.ReportID,
+			&r.Timestamp,
+			&r.Content,
+			&r.GenWithApi,
+			&r.GenWithModel,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
+}
+
+func GetReportsOlderThan(id int, limit int) ([]Report, error) {
+	dbCl, err := CreateConnection()
+	if err != nil {
+		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+	}
+	defer dbCl.Close()
+
+	rows, err := dbCl.Query(`
+		SELECT * FROM dailyreports
+		WHERE 
+			report_id < (?)
+		ORDER BY 
+			timestamp DESC
+		LIMIT ?
+	`, id, limit)
+
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	var results []Report
+
+	for rows.Next() {
+		var r Report
+		err := rows.Scan(
+			&r.ReportID,
+			&r.Timestamp,
+			&r.Content,
+			&r.GenWithApi,
+			&r.GenWithModel,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		results = append(results, r)
+	}
+
+	return results, nil
+}
+
 func GetReports(limit int) ([]Report, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -146,4 +227,31 @@ func GetReportById(id int) (*Report, error) {
 	}
 
 	return &rep, nil
+}
+
+func DeleteReportsById(ids []int) error {
+	dbCl, err := CreateConnection()
+	if err != nil {
+		return fmt.Errorf("could not connect to DB: %v", err)
+	}
+	defer dbCl.Close()
+
+	questionMarks := generateNumOfQuestionMarks(len(ids))
+	deleteQuery := fmt.Sprintf(`
+		DELETE FROM dailyreports
+		WHERE report_id IN (%s)
+	`, questionMarks)
+
+	// Create a slice for the query arguments
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+
+	_, err = dbCl.Exec(deleteQuery, args...)
+	if err != nil {
+		return fmt.Errorf("error deleting reports: %v", err)
+	}
+
+	return nil
 }

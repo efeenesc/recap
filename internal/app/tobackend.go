@@ -110,6 +110,34 @@ func (a *AppMethods) GetReportById(id int) *db.Report {
 	return nil
 }
 
+func (a *AppMethods) GetReportsNewerThan(id int) []db.Report {
+	if a.FunctionsGiven {
+		result, err := a.CGetReportsNewerThan(id)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		return result
+	}
+
+	return nil
+}
+
+func (a *AppMethods) GetReportsOlderThan(id int, limit int) []db.Report {
+	if a.FunctionsGiven {
+		result, err := a.CGetReportsOlderThan(id, limit)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		return result
+	}
+
+	return nil
+}
+
 func (a *AppMethods) GetScreenshotById(id int) *db.CaptureScreenshotImage {
 	if a.FunctionsGiven {
 		result, err := a.CGetScreenshotById(id)
@@ -122,6 +150,34 @@ func (a *AppMethods) GetScreenshotById(id int) *db.CaptureScreenshotImage {
 	}
 
 	return nil
+}
+
+func (a *AppMethods) DeleteScreenshotsById(ids []int) error {
+	if a.FunctionsGiven {
+		err := a.CDeleteScreenshotsById(ids)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Callback functions not passed")
+}
+
+func (a *AppMethods) DeleteReportsById(ids []int) error {
+	if a.FunctionsGiven {
+		err := a.CDeleteReportsById(ids)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Callback functions not passed")
 }
 
 func (a *AppMethods) GenerateReportFromScreenshotIds(ids []int) (*int64, error) {

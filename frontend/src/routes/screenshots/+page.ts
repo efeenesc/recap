@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import { get } from "svelte/store";
 import {
     screenshotStore,
     processedScreenshotStore,
@@ -34,12 +34,15 @@ async function pullFromStore(
     });
 
     const newScreenshots = await getScreenshotsNewerThan(oldest);
-    if (!newScreenshots) return get(screenshotStore);
 
     screenshotStore.update((prev) => {
         if (!prev) return prev;
 
-        return [...newScreenshots, ...prev];
+        let newVal;
+        if (!newScreenshots) newVal = [...prev];
+        else newVal = [...newScreenshots, ...prev];
+
+        return newVal.splice(0, 30);
     });
 
     return get(screenshotStore);
@@ -54,12 +57,12 @@ export const load = async () => {
     if (!result) {
         result = await pullFromDb(30);
     }
-    
+
     return {
         streamed: {
             items: {
-                subscribe: processedScreenshotStore.subscribe
-            }
+                subscribe: processedScreenshotStore.subscribe,
+            },
         },
     };
 };

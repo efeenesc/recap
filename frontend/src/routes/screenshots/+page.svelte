@@ -11,12 +11,13 @@
         getScreenshotsNewerThan,
         getScreenshotsOlderThan,
     } from "../../utils/screenshot.ts";
-    import { GenerateReportFromScreenshotIds } from "$lib/wailsjs/go/app/AppMethods.js";
+    import { GenerateReportFromScreenshotIds, DeleteScreenshotsById } from "$lib/wailsjs/go/app/AppMethods.js";
     import { addNewDialog } from "../../utils/dialog.ts";
     import { screenshotStore } from "$lib/stores/ScreenshotStore.ts";
     import { scrollStore } from "$lib/stores/ScrollStore.ts";
     import DoneAllIcon from "../../icons/DoneAllIcon.svelte";
     import DoneIcon from "../../icons/DoneIcon.svelte";
+    import XIcon from './../../icons/XIcon.svelte';
 
     interface Data {
         streamed: {
@@ -39,6 +40,8 @@
 
     let scrollTop: number = 0;
     let titleBackgroundOpacity: boolean = false;
+
+    let allScreenshotsLoaded: boolean = false;
 
     $: {
         if (scrollTop) {
@@ -99,7 +102,6 @@
     }
 
     async function getOlderScreenshots() {
-        console.log("Getting older screenshots");
         let oldestKnownId: number | undefined;
         const allScreenshots = get(rcvScr);
 
@@ -123,7 +125,11 @@
                 oldestKnownId,
                 30
             );
-            console.log("New screenshots retrieved:", newScreenshots);
+
+            if (newScreenshots === null || newScreenshots.length === 0) {
+                allScreenshotsLoaded = true;
+                return;
+            }
 
             screenshotStore.update((prev) => {
                 if (!Array.isArray(prev)) return newScreenshots;
@@ -136,10 +142,11 @@
 
     onDestroy(() => {
         EventsOff("rcv:screenshotran");
+        loadMoreDivObserver.disconnect();
     });
 
     onMount(() => {
-        const subscr = scrollStore.subscribe(
+        const unsubscribe = scrollStore.subscribe(
             (scrollPos) => (scrollTop = scrollPos)
         );
 
@@ -147,7 +154,6 @@
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        console.log("YOOO");
                         getOlderScreenshots();
                     }
                 });
@@ -158,18 +164,13 @@
         subscribeToScreenshotEvent();
 
         return () => {
-            subscr();
+            unsubscribe();
         }; // Unsubscribe from scrollStore when destroying
     });
 
     $: if (loadMoreDiv) {
         loadMoreDivObserver.observe(loadMoreDiv);
     }
-
-    onDestroy(() => {
-        loadMoreDivObserver.unobserve(loadMoreDiv);
-        loadMoreDivObserver.disconnect();
-    });
 
     function selectAllFromDate(event: any, date: string) {
         let checkAll: boolean = checkedItems[date] ? false : true;
@@ -188,12 +189,13 @@
         });
     }
 
-    afterNavigate((nav) => {
-        if (!nav.from) return;
-        const targetScr = document.getElementById("s" + nav.from.params)!;
+    beforeNavigate(async (nav) => {
+        const targetScr = document.getElementById("s" + nav.to!.params!.id)!;
         if (!targetScr) return;
         targetScr.classList.add("transition-box-container");
         targetScr.children[1].classList.add("transition-box-content");
+        targetScr.querySelector('.icon')!.classList.add("exclude-transition");
+        await nav.complete;
     });
 
     function scrClicked(date: string, captureId: number, event: MouseEvent) {
@@ -221,20 +223,6 @@
             });
             return;
         }
-
-        // Handle non-selecting clicks
-        const clickTarget = event.target as HTMLDivElement | HTMLImageElement;
-        const container: HTMLDivElement = clickTarget.id
-            ? (clickTarget as HTMLDivElement)
-            : ((clickTarget as HTMLImageElement)
-                  .parentElement as HTMLDivElement);
-
-        const image: HTMLImageElement = container
-            .children[0] as HTMLImageElement;
-
-        // Add classes for styling
-        container.classList.add("transition-box-container");
-        image.classList.add("transition-box-content");
 
         // Navigate to the screenshot
         goto(`/screenshots/${captureId}`);
@@ -330,6 +318,55 @@
             });
         }
     }
+
+    /**
+     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2 
+     */
+    async function deleteSelectedStep1() {
+        const allScrs = get(rcvScr);
+        if (!allScrs) return;
+
+        const selectedIds: number[] = [];
+        Object.keys(allScrs).forEach((key) =>
+            allScrs[key].map((scr) => {
+                if (scr.Selected === true) {
+                    selectedIds.push(scr.CaptureID);
+                }
+            })
+        );
+
+        try {
+            addNewDialog({
+                title: "Confirmation",
+                description: `${selectedIds.length} screenshot${selectedIds.length !== 1 ? 's' : ''} will be deleted. Are you sure you want to proceed?`,
+                primaryButtonName: "Delete",
+                primaryButtonCallback: async () => await deleteSelectedStep2(selectedIds),
+                secondaryButtonName: "Cancel",
+                secondaryButtonCallback: () => console.log("Cancelled")
+            });
+        } catch (err) {
+            console.error(err);
+            addNewDialog({
+                title: "Report generation failed",
+                description: `The following error was received: ${err}`,
+            });
+        }
+    }
+
+    async function deleteSelectedStep2(ids: number[]) {
+        try {
+            await DeleteScreenshotsById(ids);
+            screenshotStore.update(prev => {
+                const filtered = prev.filter(r => !ids.includes(r.CaptureID));
+                return filtered;
+            })
+        } catch (err: any) {
+            addNewDialog({
+                title: "Error",
+                description: `Could not delete screenshots with the following error: ${err}`
+            })
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -359,6 +396,7 @@
                         Report
                     </div>
                     <div
+                        on:click={deleteSelectedStep1}
                         class="opacity-0 transition-all {selecting
                             ? 'opacity-100'
                             : ''} -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-red-300 bg-red-400 text-black font-semibold rounded-lg"
@@ -427,13 +465,15 @@
                                             </div>
                                         {/if}
 
-                                        <div class="absolute top-2 right-2 w-6 h-6">
+                                        <div class="icon absolute top-2 right-2 w-8 h-8 z-40 p-1 rounded-full bg-blue-200">
                                             {#if s.Description}
                                                 {#if s.ReportID}
-                                                    <DoneAllIcon strokeColor="#0f0"></DoneAllIcon>
+                                                    <DoneAllIcon title="Screenshot was included in a report" strokeColor="#2966eb"></DoneAllIcon>
                                                 {:else}
-                                                    <DoneIcon strokeColor="#0f0"></DoneIcon>
+                                                    <DoneIcon title="Description was generated for screenshot" strokeColor="#2966eb"></DoneIcon>
                                                 {/if}
+                                            {:else}
+                                            <XIcon title="No description generated yet" strokeColor="#3c424a"></XIcon>
                                             {/if}
                                         </div>
 
@@ -455,7 +495,11 @@
                         </div>
                     </div>
                 {/each}
-                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
+                {#if !allScreenshotsLoaded}
+                    <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
+                {:else}
+                    <div></div>
+                {/if}
             {:else}
                 No screenshots available.
             {/if}
