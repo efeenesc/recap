@@ -13,7 +13,6 @@ import (
 )
 
 var AppInstance App
-var appContext context.Context
 var WailsContext *context.Context
 
 type App struct {
@@ -53,7 +52,6 @@ func NewAppMethods() *AppMethods {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	appContext = ctx
 }
 
 func (a *App) onDomReady(ctx context.Context) {

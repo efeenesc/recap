@@ -64,7 +64,7 @@ func onReady() {
 				}
 
 			case <-summaryBtn.ClickedCh:
-				llm.GenerateDailyReport()
+				_, _ = llm.GenerateDailyReport()
 
 			case <-exitBtn.ClickedCh:
 				runtime.Quit(*app.WailsContext)

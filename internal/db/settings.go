@@ -160,21 +160,6 @@ func LoadConfig() (*config.AppConfig, error) {
 	return loadedConf, nil
 }
 
-// Checks the settings in the provided map to ensure they are valid according to specific criteria.
-// If a setting is found to be invalid, it updates that setting with the default value in the database.
-func validateSettings(settings map[string]Setting) {
-	dbCl, err := CreateConnection()
-	if err != nil {
-		fmt.Printf("Could not create DB connection: %v\n", err.Error())
-	}
-
-	for key, setting := range settings {
-		if !isValid(setting) {
-			updateSetting(dbCl, key, defaultSettings[key])
-		}
-	}
-}
-
 // Triggers re-initialization of specific app components (like scheduling or LLM) based on updated settings.
 // It checks which settings have changed and only reinitializes components if required by those changes.
 func RefreshInit(newSettings map[string]string) {
@@ -283,23 +268,43 @@ func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
 	return nil
 }
 
+// Checks the settings in the provided map to ensure they are valid according to specific criteria.
+// If a setting is found to be invalid, it updates that setting with the default value in the database.
+//! There is currently no setting validation in place.
+// func validateSettings(settings map[string]Setting) {
+// 	dbCl, err := CreateConnection()
+// 	if err != nil {
+// 		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+// 	}
+
+// 	for key, setting := range settings {
+// 		if !isValid(setting) {
+// 			err = updateSetting(dbCl, key, defaultSettings[key])
+// 			if err != nil {
+// 				fmt.Printf("Could not update setting: %v\n", err.Error())
+// 			}
+// 		}
+// 	}
+// }
+
 // Checks if a specific setting meets the defined validation criteria for that setting.
 // Returns true if the setting is valid, otherwise returns false.
-func isValid(setting Setting) bool {
-	switch setting.Key {
-	case "max_users":
-		// Assume max_users should be a positive integer
-		if _, err := strconv.Atoi(setting.Value); err != nil || setting.Value == "0" {
-			return false
-		}
-	case "enable_feature":
-		// Assume enable_feature should be "true" or "false"
-		if setting.Value != "true" && setting.Value != "false" {
-			return false
-		}
-	// Add more cases for other settings as needed
-	default:
-		return false // Unknown setting
-	}
-	return true
-}
+// ! There is currently no setting validation.
+// func isValid(setting Setting) bool {
+// 	switch setting.Key {
+// 	case "max_users":
+// 		// Assume max_users should be a positive integer
+// 		if _, err := strconv.Atoi(setting.Value); err != nil || setting.Value == "0" {
+// 			return false
+// 		}
+// 	case "enable_feature":
+// 		// Assume enable_feature should be "true" or "false"
+// 		if setting.Value != "true" && setting.Value != "false" {
+// 			return false
+// 		}
+// 	// Add more cases for other settings as needed
+// 	default:
+// 		return false // Unknown setting
+// 	}
+// 	return true
+// }

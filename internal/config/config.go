@@ -31,7 +31,8 @@ type AppConfig struct {
 func createFolderIfNotExists(path string) {
 	_, err := os.Stat(path)
 	if err != nil {
-		os.Mkdir(path, 0700)
+		err = os.Mkdir(path, 0700)
+		log.Fatalf("Could not create new folder: %v\n", err.Error())
 	}
 }
 

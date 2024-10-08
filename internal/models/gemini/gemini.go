@@ -35,7 +35,7 @@ func (a *AIModel) startClientDeadline() {
 	fmt.Println("Created deadline timer")
 
 	go func() {
-		for {
+		for { // nolint: all
 			select {
 			case <-a.clientTicker.C:
 				// Close the client after 5 minutes of inactivity
@@ -125,7 +125,13 @@ func sendFileToGemini(client *genai.Client, ctx context.Context, modelName strin
 	if err != nil {
 		return "", err
 	}
-	defer client.DeleteFile(ctx, file.Name) // Defer file deletion
+
+	defer func() {
+		err = client.DeleteFile(ctx, file.Name)
+		if err != nil {
+			fmt.Printf("Failed to delete file from Gemini (was it already deleted?): %v\n", err.Error())
+		}
+	}() // Defer file deletion
 
 	model := client.GenerativeModel(modelName)
 	resp, err := model.GenerateContent(ctx, genai.FileData{URI: file.URI}, genai.Text(prompt))

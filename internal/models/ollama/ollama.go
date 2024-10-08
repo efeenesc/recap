@@ -32,7 +32,7 @@ func (a *AIModel) startClientDeadline() {
 	fmt.Println("Created deadline timer")
 
 	go func() {
-		for {
+		for { // nolint: all
 			select {
 			case <-a.clientTicker.C:
 				a.mu.Lock()
