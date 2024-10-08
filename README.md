@@ -1,8 +1,11 @@
-# Recap
-
-<img src="/assets/appicon.png" width="40%">
-
-## Description
+<div align="center">
+<picture>
+    <img src="/assets/appicon.png" width="30%">
+</picture>
+</div>
+<h1 align="center">
+Recap
+</h1>
 
 A take on the idea of Microsoft Recall with the purpose of generating reports of user activity, written in Go.
 
