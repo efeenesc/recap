@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"rcallport/internal/config"
+	"recap/internal/config"
 	"reflect"
 	"strconv"
 )
@@ -14,6 +14,7 @@ type Setting struct {
 	Value string `json:"Value"`
 }
 
+// Display properties for settings
 type SettingDisplayProps struct {
 	DisplayName string `json:"DisplayName"`
 	Description string `json:"Description"`
@@ -45,9 +46,9 @@ func GetDisplayValues() map[string]SettingDisplayProps {
 		"DescGenAPI":                {DisplayName: "API", Description: "Select the AI service to use for generating descriptions of your screenshots", Category: "Vision", InputType: "APIPicker"},
 		"DescGenModel":              {DisplayName: "Model", Description: "Choose the specific AI model for analyzing screenshots and generating descriptions", Category: "Vision", InputType: "APIModelPicker"},
 		"DescGenPrompt":             {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating screenshot descriptions", Category: "Vision", InputType: "ExtendedTextInput"},
-		"DescGenIntervalEnabled":    {DisplayName: "Schedule", Description: "Enable or disable automatic screenshot capturing and description generation at set intervals", Category: "Vision", InputType: "Boolean"},
+		"DescGenIntervalEnabled":    {DisplayName: "Schedule", Description: "Toggle automatic description generation after Recap starts", Category: "Vision", InputType: "Boolean"},
 		"DescGenIntervalMins":       {DisplayName: "Interval", Description: "Set how often (in minutes) screenshots should be automatically sent for description generation", Category: "Vision", InputType: "NumberInput"},
-		"ScreenshotIntervalEnabled": {DisplayName: "Schedule", Description: "Toggle automatic screenshot capturing at regular intervals on or off", Category: "Screenshots", InputType: "Boolean"},
+		"ScreenshotIntervalEnabled": {DisplayName: "Schedule", Description: "Toggle automatic screenshot capturing at regular intervals after Recap starts", Category: "Screenshots", InputType: "Boolean"},
 		"ScreenshotIntervalMins":    {DisplayName: "Interval", Description: "Define how frequently (in minutes) automatic screenshots should be taken", Category: "Screenshots", InputType: "NumberInput"},
 		"ReportAPI":                 {DisplayName: "API", Description: "Choose the AI service for generating reports based on your screenshot descriptions", Category: "Reports", InputType: "APIPicker"},
 		"ReportModel":               {DisplayName: "Model", Description: "Select the specific AI model for creating reports from your screenshot descriptions", Category: "Reports", InputType: "APIModelPicker"},
@@ -61,6 +62,8 @@ func GetDisplayValues() map[string]SettingDisplayProps {
 	return settingKeyDisplayVals
 }
 
+// Retrieves all settings from the database and returns them as a map where each key is the setting name
+// and each value is a Setting struct. Returns an error if the query fails.
 func LoadSettings(db *sql.DB) (map[string]Setting, error) {
 	rows, err := db.Query("SELECT * FROM settings")
 	if err != nil {
@@ -79,6 +82,8 @@ func LoadSettings(db *sql.DB) (map[string]Setting, error) {
 	return settings, nil
 }
 
+// Initializes the application configuration by loading settings from the database and merging them with default values.
+// It updates the config object with the final values and returns the populated AppConfig struct or an error if the operation fails.
 func LoadConfig() (*config.AppConfig, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -155,6 +160,8 @@ func LoadConfig() (*config.AppConfig, error) {
 	return loadedConf, nil
 }
 
+// Checks the settings in the provided map to ensure they are valid according to specific criteria.
+// If a setting is found to be invalid, it updates that setting with the default value in the database.
 func validateSettings(settings map[string]Setting) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -168,6 +175,8 @@ func validateSettings(settings map[string]Setting) {
 	}
 }
 
+// Triggers re-initialization of specific app components (like scheduling or LLM) based on updated settings.
+// It checks which settings have changed and only reinitializes components if required by those changes.
 func RefreshInit(newSettings map[string]string) {
 	_, ok1 := newSettings["ScreenshotIntervalMins"]
 	_, ok2 := newSettings["DescGenIntervalMins"]
@@ -184,6 +193,8 @@ func RefreshInit(newSettings map[string]string) {
 	}
 }
 
+// Updates settings in both the database and the in-memory configuration (config.Config) using reflection.
+// It ensures that changes to settings are saved persistently and reflected immediately in the running application.
 func UpdateSettings(newSettings map[string]string) error {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -203,7 +214,18 @@ func UpdateSettings(newSettings map[string]string) error {
 		r := reflect.ValueOf(&config.Config).Elem()
 		field := r.FieldByName(key)
 		if field.IsValid() && field.CanSet() {
-			field.SetString(val)
+			switch field.Kind() {
+			case reflect.Int:
+				intVal, err := strconv.Atoi(val)
+				if err != nil {
+					log.Panic("Could not parse int to string during setting reflection")
+				}
+				field.SetInt(int64(intVal))
+
+			default:
+				field.SetString(val)
+			}
+
 		} else {
 			fmt.Printf("Field %s not found or not settable\n", key)
 		}
@@ -212,12 +234,14 @@ func UpdateSettings(newSettings map[string]string) error {
 	return nil
 }
 
+// Updates a specific setting in the database using the provided key and new value.
+// It performs a SQL UPDATE operation and returns an error if the update fails.
 func updateSetting(db *sql.DB, key, newValue string) error {
 	_, err := db.Exec("UPDATE settings SET value = ? WHERE key = ?", newValue, key)
 	return err
 }
 
-// initializeSettings goes through a map of keys and default values,
+// Goes through a map of keys and default values,
 // checks if they exist in the settings table, and creates them if they don't exist.
 func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
 	// Prepare the SELECT statement
@@ -259,6 +283,8 @@ func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
 	return nil
 }
 
+// Checks if a specific setting meets the defined validation criteria for that setting.
+// Returns true if the setting is valid, otherwise returns false.
 func isValid(setting Setting) bool {
 	switch setting.Key {
 	case "max_users":

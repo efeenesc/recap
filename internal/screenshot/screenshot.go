@@ -9,7 +9,7 @@ import (
 	"os"
 	"path"
 
-	"rcallport/internal/config"
+	"recap/internal/config"
 
 	"github.com/google/uuid"
 	"github.com/kbinani/screenshot"

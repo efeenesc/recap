@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"rcallport/internal/config"
+	"recap/internal/config"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -85,7 +85,7 @@ func createTable(db *sql.DB) error {
 
 func CreateConnection() (*sql.DB, error) {
 	proot, _ := config.GetProjectRoot()
-	db, err := sql.Open("sqlite3", path.Join(proot, "rcallport.db"))
+	db, err := sql.Open("sqlite3", path.Join(proot, "recap.db"))
 
 	if err != nil {
 		log.Fatal(err)

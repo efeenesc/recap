@@ -1,10 +1,10 @@
 import { GetConfig, GetDisplayValues } from "$lib/wailsjs/go/app/AppMethods.js"
-import { db } from "$lib/wailsjs/go/models.ts"
-import type { BasicSetting, ExtendedSettingDisplayProps, ExtendedSettings } from "../../types/ExtendedSettings.interface.ts";
+import { config } from "$lib/wailsjs/go/models.ts"
+import type { BasicSetting, ExtendedSettings } from "../../types/ExtendedSettings.interface.ts";
 import { joinDisplaySettings } from "../../utils/setting.ts";
 
 // Pulls screenshot from database
-async function pullSettingsFromDb(): Promise<db.AppConfig | undefined> {
+async function pullSettingsFromDb(): Promise<config.AppConfig | undefined> {
   try {
     const res = await GetConfig();
     return res;
@@ -35,6 +35,12 @@ export const load = async () => {
         if (!basicSettings || !displayVals) reject(0);
 
         const result = joinDisplaySettings(basicSettings, displayVals!);
+
+        //! Temporarily remove these keys. Automatic reporting is not implemented yet.
+        delete result["Reports"]["ReportAutoEnabled"]
+        delete result["Reports"]["ReportAutoAt"]
+
+        console.log(result);
 
         // Handle cases where result is not found
         if (!result) {

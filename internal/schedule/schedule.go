@@ -3,11 +3,11 @@ package schedule
 import (
 	"fmt"
 	"log"
-	"rcallport/internal/app"
-	"rcallport/internal/config"
-	"rcallport/internal/db"
-	"rcallport/internal/llm"
-	"rcallport/internal/screenshot"
+	"recap/internal/app"
+	"recap/internal/config"
+	"recap/internal/db"
+	"recap/internal/llm"
+	"recap/internal/screenshot"
 	"time"
 )
 

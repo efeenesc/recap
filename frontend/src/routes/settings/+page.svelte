@@ -205,7 +205,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
-    <div class="pb-2 gap-5 flex flex-col">
+    <div class="pb-2 flex flex-col">
         <div
             class="top-gradient-bg {titleBackgroundOpacity
                 ? 'after:opacity-100'
@@ -235,7 +235,7 @@
         {:then}
             {#if $newSet}
                 {#each Object.keys($newSet) as cat}
-                    <div class="flex flex-col my-2">
+                    <div class="flex flex-col">
                         <!-- Category title -->
                         <div class="flex flex-col top-16 sticky z-40">
                             <h1 class="category font-bold text-3xl mb-4">
@@ -270,7 +270,7 @@
                                         <div
                                             on:click={() =>
                                                 revertChanges(cat, set)}
-                                            class="inline flex-shrink transition-all p-1 w-8 h-8 aspect-square rounded-full bg-gray-200 {changedSettings[
+                                            class="cursor-pointer inline flex-shrink transition-all p-1 w-8 h-8 aspect-square rounded-full bg-gray-200 {changedSettings[
                                                 set
                                             ] !== undefined
                                                 ? 'opacity-100 scale-100'

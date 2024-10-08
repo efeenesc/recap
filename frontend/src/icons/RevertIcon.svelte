@@ -1,3 +1,9 @@
+<!--
+Vectors and icons by Grommet
+https://github.com/grommet/grommet-icons?ref=svgrepo.com
+in Apache License via SVG Repo
+https://www.svgrepo.com/
+-->
 <script lang="ts">
   export let strokeColor;
 </script>

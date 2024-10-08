@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import { reportStore, processedReportStore } from "$lib/stores/ReportStore.ts";
 import type { ExtendedReport } from "../../types/ExtendedReport.interface.ts";
 import { getReports, getReportsNewerThan } from "../../utils/report.ts";
+import { navigating } from "$app/stores";
 
 // Pulls screenshot from database
 async function pullFromDb(
@@ -36,6 +37,10 @@ async function pullFromStore(
         if (!newScreenshots) newVal = [...prev];
         else newVal = [...newScreenshots, ...prev];
 
+        // If navigating back from /screenshots/[id], don't trim the screenshot store down to 30 items
+        if (get(navigating)!.from!.route.id === "/reports/[id]")
+            return newVal;
+
         return newVal.splice(0, 30);
     });
 
@@ -53,10 +58,6 @@ export const load = async () => {
     }
 
     return {
-        streamed: {
-            items: {
-                subscribe: processedReportStore.subscribe,
-            },
-        },
+        data: get(processedReportStore)
     };
 };

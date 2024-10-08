@@ -1,10 +1,12 @@
 <script lang="ts">
     import VirtualScrollbar from "./../components/virtual-scrollbar/VirtualScrollbar.svelte";
-    import SidePanel from "./../components/side-panel/side-panel.svelte";
+    import SidePanel from "./../components/side-panel/SidePanel.svelte";
     import { onNavigate } from "$app/navigation";
     import { onMount } from "svelte";
     import Dialog from "../components/dialog/Dialog.svelte";
     import { updateScroll } from "$lib/stores/ScrollStore.ts";
+    import { createLazyIntersect } from "../components/lazy-intersect/LazyIntersect.ts";
+
 
     let bodyFullHeight: number;
     let scrollHeight: number;
@@ -17,10 +19,19 @@
             scrollHeight = target.scrollTop;
             bodyFullHeight = target.scrollHeight;
         });
+
+        const { intersectionObserver, mutationObserver } = createLazyIntersect();
+
+        return () => {
+            mutationObserver.disconnect();
+            intersectionObserver.disconnect();
+        }
     });
 
     onNavigate((navigation) => {
         if (!document.startViewTransition) return;
+
+        updateScroll(0);
 
         return new Promise((resolve) => {
             document.startViewTransition(async () => {
@@ -48,7 +59,7 @@
         <div
             bind:this={bodyContent}
             bind:clientHeight={bodyInnerHeight}
-            class="w-full h-full rounded-l-lg outline outline-1 bg-opacity-90 outline-neutral-200 dark:outline-neutral-900 px-4 lg:px-6 xl:px-10 overflow-hidden overflow-y-scroll dark:bg-opacity-50 bg-white dark:bg-black"
+            class="scroller w-full h-full rounded-l-lg outline outline-1 bg-opacity-90 outline-neutral-200 dark:outline-neutral-900 px-4 lg:px-6 xl:px-10 overflow-hidden overflow-y-scroll dark:bg-opacity-50 bg-white dark:bg-black"
         >
             <!-- <div id="scroll-gradient" class="absolute h-[40%] top-2 left-[25%] right-0 z-20 opacity-0"></div> -->
             <div class="page-container h-max pt-10">

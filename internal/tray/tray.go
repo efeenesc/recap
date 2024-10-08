@@ -2,10 +2,11 @@ package tray
 
 import (
 	"fmt"
-	"rcallport/internal/app"
-	"rcallport/internal/config"
-	"rcallport/internal/llm"
-	"rcallport/internal/schedule"
+	"os"
+	"recap/internal/app"
+	"recap/internal/config"
+	"recap/internal/llm"
+	"recap/internal/schedule"
 
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -14,15 +15,23 @@ import (
 var ScrTrayBtn *systray.MenuItem
 var LLMTrayBtn *systray.MenuItem
 
+func getIcon() ([]byte, error) {
+	return os.ReadFile("icon.ico")
+}
+
 func onReady() {
-	// systray.SetIcon(icon.Data)
-	systray.SetTitle("Rcallport")
-	systray.SetTooltip("Open Rcallport")
+	systray.SetTitle("Recap")
+	systray.SetTooltip("Open Recap")
+
+	bytes, err := getIcon()
+	if err == nil {
+		systray.SetIcon(bytes)
+	}
 
 	scrScheduleEnabled := config.Config.ScreenshotIntervalEnabled == 1
 	llmScheduleEnabled := config.Config.DescGenIntervalEnabled == 1
 
-	openBtn := systray.AddMenuItem("Open", "Show Rcallport's window")
+	openBtn := systray.AddMenuItem("Open", "Show Recap")
 	systray.AddSeparator()
 	ScrTrayBtn := systray.AddMenuItemCheckbox("Automatic screenshots", "Turn automatic screenshots on or off", scrScheduleEnabled)
 	LLMTrayBtn := systray.AddMenuItemCheckbox("Description generation", "Turn automatic screenshot description generation on or off", llmScheduleEnabled)
@@ -55,11 +64,9 @@ func onReady() {
 				}
 
 			case <-summaryBtn.ClickedCh:
-				fmt.Println("Summary button clicked!")
 				llm.GenerateDailyReport()
 
 			case <-exitBtn.ClickedCh:
-				fmt.Println("Exit button clicked!")
 				runtime.Quit(*app.WailsContext)
 			}
 		}
@@ -67,9 +74,9 @@ func onReady() {
 }
 
 func onExit() {
-	fmt.Println("Exitting program")
+	fmt.Println("Exiting program")
 }
 
 func Initialize() {
-	systray.Run(onReady, onExit)
+	systray.Register(onReady, onExit)
 }

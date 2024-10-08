@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { lex, parse } from '$lib/markdown/MarkdownParser.ts';
+	import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts"
     import { goto } from "$app/navigation";
     import BackArrow from "../../../icons/BackArrow.svelte";
     import type { ExtendedReport } from "../../../types/ExtendedReport.interface.ts";
@@ -12,7 +12,7 @@
     }
 
     function parseMd(content: string) {
-        const parsed = parse(lex(content));
+        const parsed = ConvertToHtmlTree(content);
         return parsed;
     }
 
@@ -20,7 +20,7 @@
     export let data: Data;
 
     async function goBack() {
-        await goto("/reports/");
+        window.history.back();
     }
     
     function keyUp(key: KeyboardEvent) {

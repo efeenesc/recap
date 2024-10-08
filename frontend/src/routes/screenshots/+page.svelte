@@ -11,34 +11,42 @@
         getScreenshotsNewerThan,
         getScreenshotsOlderThan,
     } from "../../utils/screenshot.ts";
-    import { GenerateReportFromScreenshotIds, DeleteScreenshotsById } from "$lib/wailsjs/go/app/AppMethods.js";
+    import {
+        GenerateReportFromScreenshotIds,
+        DeleteScreenshotsById,
+    } from "$lib/wailsjs/go/app/AppMethods.js";
     import { addNewDialog } from "../../utils/dialog.ts";
-    import { screenshotStore } from "$lib/stores/ScreenshotStore.ts";
+    import {
+        processedScreenshotStore,
+        screenshotStore,
+    } from "$lib/stores/ScreenshotStore.ts";
     import { scrollStore } from "$lib/stores/ScrollStore.ts";
     import DoneAllIcon from "../../icons/DoneAllIcon.svelte";
     import DoneIcon from "../../icons/DoneIcon.svelte";
-    import XIcon from './../../icons/XIcon.svelte';
+    import XIcon from "./../../icons/XIcon.svelte";
+    import type { Snapshot } from "@sveltejs/kit";
 
     interface Data {
-        streamed: {
-            items: {
-                subscribe: (
-                    run: (value: DatedScreenshot) => void
-                ) => () => void;
-            };
-        };
+        data: DatedScreenshot;
     }
 
     export let data: Data;
 
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
+    let loadMoreDivObserverTimeout: number;
     let prevId: number | undefined;
     let selecting: boolean = false;
     const rcvScr = writable<DatedScreenshot | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
+    let isInitialLoad = true;
+
+    $: rcvScr.set(data.data);
 
     let scrollTop: number = 0;
+
+    // Variable assigned to during snapshot.recover. If assigned, scroll this element to previous Y position.
+    let scrollTopSnapshot: number | undefined;
     let titleBackgroundOpacity: boolean = false;
 
     let allScreenshotsLoaded: boolean = false;
@@ -49,24 +57,20 @@
         }
     }
 
-    async function getData(): Promise<DatedScreenshot> {
-        return new Promise((resolve) => {
-            data.streamed.items.subscribe((items) => {
-                rcvScr.set(items);
-                resolve(items);
-            });
-        });
+    $: {
+        if (scrollTopSnapshot) {
+            const scroller = document.getElementsByClassName("scroller")[0];
+            setTimeout(() => {
+                scroller.scroll(0, scrollTopSnapshot!);
+            }, 0);
+        }
     }
 
     async function animateLoad(id: string) {
-        if (prevId && "s" + prevId === id) {
-            const target = document.getElementById("s" + prevId)!;
-            target.style.scale = "1";
-            target.style.opacity = "1";
-            return;
-        }
-
-        gsap.to("#" + id, {
+        gsap.fromTo("#" + id, {
+            opacity: 0,
+            scale: 0.8,
+        }, {
             opacity: 1,
             scale: 1,
             duration: 1,
@@ -163,13 +167,25 @@
 
         subscribeToScreenshotEvent();
 
+        isInitialLoad = false;
+
+        const scrUnsubscribe = processedScreenshotStore.subscribe((value) => {
+            if (!isInitialLoad) {
+                rcvScr.set(value);
+            }
+        });
+
         return () => {
             unsubscribe();
-        }; // Unsubscribe from scrollStore when destroying
+            scrUnsubscribe();
+            clearTimeout(loadMoreDivObserverTimeout);
+        }; // Unsubscribe from scrollStore when destroying. Clear timeout for loadMoreDivObserverTimeout, so that the timeout doesn't run in another page
     });
 
     $: if (loadMoreDiv) {
-        loadMoreDivObserver.observe(loadMoreDiv);
+        loadMoreDivObserverTimeout = setTimeout(() => {
+            loadMoreDivObserver.observe(loadMoreDiv);
+        }, 2000);
     }
 
     function selectAllFromDate(event: any, date: string) {
@@ -194,9 +210,18 @@
         if (!targetScr) return;
         targetScr.classList.add("transition-box-container");
         targetScr.children[1].classList.add("transition-box-content");
-        targetScr.querySelector('.icon')!.classList.add("exclude-transition");
+        targetScr.querySelector(".icon")!.classList.add("exclude-transition");
         await nav.complete;
     });
+
+    export const snapshot: Snapshot<number> = {
+        capture: () => {
+            return scrollTop;
+        },
+        restore: (snapshot) => {
+            scrollTopSnapshot = snapshot;
+        },
+    };
 
     function scrClicked(date: string, captureId: number, event: MouseEvent) {
         // If 'selecting' is true and a screenshot was clicked, it was selected, not routed to. Early return
@@ -320,7 +345,7 @@
     }
 
     /**
-     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2 
+     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2
      */
     async function deleteSelectedStep1() {
         const allScrs = get(rcvScr);
@@ -338,11 +363,12 @@
         try {
             addNewDialog({
                 title: "Confirmation",
-                description: `${selectedIds.length} screenshot${selectedIds.length !== 1 ? 's' : ''} will be deleted. Are you sure you want to proceed?`,
+                description: `${selectedIds.length} screenshot${selectedIds.length !== 1 ? "s" : ""} will be deleted. Are you sure you want to proceed?`,
                 primaryButtonName: "Delete",
-                primaryButtonCallback: async () => await deleteSelectedStep2(selectedIds),
+                primaryButtonCallback: async () =>
+                    await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                secondaryButtonCallback: () => console.log("Cancelled")
+                secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);
@@ -356,15 +382,15 @@
     async function deleteSelectedStep2(ids: number[]) {
         try {
             await DeleteScreenshotsById(ids);
-            screenshotStore.update(prev => {
-                const filtered = prev.filter(r => !ids.includes(r.CaptureID));
+            screenshotStore.update((prev) => {
+                const filtered = prev.filter((r) => !ids.includes(r.CaptureID));
                 return filtered;
-            })
+            });
         } catch (err: any) {
             addNewDialog({
                 title: "Error",
-                description: `Could not delete screenshots with the following error: ${err}`
-            })
+                description: `Could not delete screenshots with the following error: ${err}`,
+            });
         }
     }
 </script>
@@ -372,7 +398,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
-    <div class="pb-2 gap-5 flex flex-col">
+    <div class="pb-2 flex flex-col">
         <div
             class="top-gradient-bg {titleBackgroundOpacity
                 ? 'after:opacity-100'
@@ -389,17 +415,13 @@
                 {#if selecting}
                     <div
                         on:click={generateReport}
-                        class="opacity-0 transition-all {selecting
-                            ? 'opacity-100'
-                            : ''} -tracking-wide text-xl px-4 p-2 bg-opacity-80 hover:bg-blue-300 active:scale-[99%] cursor-pointer bg-blue-400 text-black font-semibold rounded-lg"
+                        class="transition-all -tracking-wide text-xl px-4 p-2 bg-opacity-80 hover:bg-blue-300 active:scale-[99%] cursor-pointer bg-blue-400 text-black font-semibold rounded-lg"
                     >
                         Report
                     </div>
                     <div
                         on:click={deleteSelectedStep1}
-                        class="opacity-0 transition-all {selecting
-                            ? 'opacity-100'
-                            : ''} -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-red-300 bg-red-400 text-black font-semibold rounded-lg"
+                        class="transition-all -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-red-300 bg-red-400 text-black font-semibold rounded-lg"
                     >
                         Delete
                     </div>
@@ -414,98 +436,103 @@
             </div>
         </div>
 
-        {#await getData()}
-            Loading screenshots...
-        {:then}
-            {#if $rcvScr}
-                {#each Object.entries($rcvScr) as [date, screenshots]}
-                    <div>
-                        <div
-                            class="flex gap-5 sticky items-center top-16 z-30 pointer-events-none"
-                        >
-                            <h2 class="text-3xl font-bold tracking-wider">
-                                {date}
-                            </h2>
-                            <div class="checkbox opacity-0 pointer-events-none">
-                                <Checkbox
-                                    id={date}
-                                    bind:checked={checkedItems[date]}
-                                    on:checked={(e) =>
-                                        selectAllFromDate(e, date)}
-                                ></Checkbox>
-                            </div>
-                        </div>
-
-                        <div class="my-4 grid grid-cols-2 gap-4">
-                            {#each screenshots as s (s.CaptureID)}
-                                <div
-                                    on:click={(event) =>
-                                        scrClicked(date, s.CaptureID, event)}
-                                    class="m-0 p-0"
-                                >
-                                    <div
-                                        id="s{s.CaptureID}"
-                                        class="group cursor-pointer relative rounded-lg bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl opacity-0 scale-95"
-                                    >
-                                        {#if selecting}
-                                            <div
-                                                class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {s.Selected
-                                                    ? 'bg-neutral-500'
-                                                    : 'bg-neutral-800'}"
-                                            >
-                                                <div
-                                                    class="transition-all opacity-0 scale-90 w-[50%] {s.Selected
-                                                        ? 'opacity-90 scale-100'
-                                                        : ''}"
-                                                >
-                                                    <Checkmark
-                                                        strokeColor="#fff"
-                                                    ></Checkmark>
-                                                </div>
-                                            </div>
-                                        {/if}
-
-                                        <div class="icon absolute top-2 right-2 w-8 h-8 z-40 p-1 rounded-full bg-blue-200">
-                                            {#if s.Description}
-                                                {#if s.ReportID}
-                                                    <DoneAllIcon title="Screenshot was included in a report" strokeColor="#2966eb"></DoneAllIcon>
-                                                {:else}
-                                                    <DoneIcon title="Description was generated for screenshot" strokeColor="#2966eb"></DoneIcon>
-                                                {/if}
-                                            {:else}
-                                            <XIcon title="No description generated yet" strokeColor="#3c424a"></XIcon>
-                                            {/if}
-                                        </div>
-
-                                        <img
-                                            alt="screenshot"
-                                            on:load|once={() =>
-                                                animateLoad("s" + s.CaptureID)}
-                                            class="group-hover:scale-[99%] group-active:scale-[95%] transition-all flex rounded-md object-contain select-none pointer-events-none"
-                                            loading="lazy"
-                                            src={s.Screenshot}
-                                        />
-
-                                        <h3 class="flex-shrink-0 pt-1 pl-2">
-                                            Snapped at {s.Time}
-                                        </h3>
-                                    </div>
-                                </div>
-                            {/each}
+        {#if $rcvScr}
+            {#each Object.entries($rcvScr) as [date, screenshots]}
+                <div>
+                    <div
+                        class="flex gap-5 sticky items-center top-16 z-30 pointer-events-none"
+                    >
+                        <h2 class="text-3xl font-bold tracking-wider">
+                            {date}
+                        </h2>
+                        <div class="checkbox opacity-0 pointer-events-none">
+                            <Checkbox
+                                id={date}
+                                bind:checked={checkedItems[date]}
+                                on:checked={(e) => selectAllFromDate(e, date)}
+                            ></Checkbox>
                         </div>
                     </div>
-                {/each}
-                {#if !allScreenshotsLoaded}
-                    <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
-                {:else}
-                    <div></div>
-                {/if}
+
+                    <div class="my-4 grid grid-cols-2 gap-4">
+                        {#each screenshots as s (s.CaptureID)}
+                            <div
+                                on:click={(event) =>
+                                    scrClicked(date, s.CaptureID, event)}
+                                data-intersect
+                                on:intersect={(e) => {s.Visible = e.detail.isIntersecting}}
+                                class="m-0 p-0 {s.Visible ? '' : 'invisible'} aspect-video"
+                            >
+                                <div
+                                    id="s{s.CaptureID}"
+                                    class="group cursor-pointer relative rounded-lg bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 shadow-2xl"
+                                >
+                                    {#if selecting}
+                                        <div
+                                            class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {s.Selected
+                                                ? 'bg-neutral-500'
+                                                : 'bg-neutral-800'}"
+                                        >
+                                            <div
+                                                class="transition-all opacity-0 scale-90 w-[50%] {s.Selected
+                                                    ? 'opacity-90 scale-100'
+                                                    : ''}"
+                                            >
+                                                <Checkmark strokeColor="#fff"
+                                                ></Checkmark>
+                                            </div>
+                                        </div>
+                                    {/if}
+
+                                    <div
+                                        class="icon absolute top-2 right-2 w-8 h-8 z-40 p-1 rounded-full bg-blue-200"
+                                    >
+                                        {#if s.Description}
+                                            {#if s.ReportID}
+                                                <DoneAllIcon
+                                                    title="Screenshot was included in a report"
+                                                    strokeColor="#2966eb"
+                                                ></DoneAllIcon>
+                                            {:else}
+                                                <DoneIcon
+                                                    title="Description was generated for screenshot"
+                                                    strokeColor="#2966eb"
+                                                ></DoneIcon>
+                                            {/if}
+                                        {:else}
+                                            <XIcon
+                                                title="No description generated yet"
+                                                strokeColor="#3c424a"
+                                            ></XIcon>
+                                        {/if}
+                                    </div>
+
+                                    <img
+                                        alt="screenshot"
+                                        on:load|once={() =>
+                                            animateLoad("s" + s.CaptureID)}
+                                        class="group-hover:scale-[99%] group-active:scale-[95%] transition-all flex rounded-md object-contain select-none pointer-events-none"
+                                        loading="lazy"
+                                        src={s.Visible ? s.Screenshot : ''}
+                                    />
+
+                                    <h3 class="flex-shrink-0 pt-1 pl-2">
+                                        Snapped at {s.Time}
+                                    </h3>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            {/each}
+            {#if !allScreenshotsLoaded}
+                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
             {:else}
-                No screenshots available.
+                <div></div>
             {/if}
-        {:catch error}
-            Error loading screenshots: {error.message}
-        {/await}
+        {:else}
+            No screenshots available.
+        {/if}
     </div>
 </div>
 

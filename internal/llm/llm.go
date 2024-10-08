@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"rcallport/internal/config"
-	"rcallport/internal/db"
-	"rcallport/internal/models"
-	"rcallport/internal/models/gemini"
-	"rcallport/internal/models/ollama"
+	"recap/internal/config"
+	"recap/internal/db"
+	"recap/internal/models"
+	"recap/internal/models/gemini"
+	"recap/internal/models/ollama"
 	"time"
 )
 

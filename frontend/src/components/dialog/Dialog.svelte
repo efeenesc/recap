@@ -82,17 +82,17 @@
         <div
             class="flex flex-col z-50 rounded-xl bg-white text-black min-w-[40%] max-w-[70%] p-6"
         >
-            <h1 class="text-2xl font-bold mb-4">
+            <h1 class="text-2xl lg:text-3xl font-extrabold mb-4">
                 {currentDialog.title}
             </h1>
-            <p class="text-lg">
+            <p class="text-lg lg:text-xl font-medium text-neutral-800">
                 {currentDialog.description}
             </p>
-            <div class="grid grid-cols-3 gap-5 mt-5">
+            <div class="flex gap-5 mt-12 text-md lg:text-xl">
                 {#if currentDialog.primaryButtonCallback}
                     <button
                         on:click={() => invokeCallback("primary")}
-                        class="flex w-full justify-center p-3 bg-blue-500 text-white rounded"
+                        class="flex shadow-md w-full font-bold items-center justify-center py-4 transition-colors hover:bg-blue-400 bg-blue-500 text-white rounded-xl"
                     >
                         {currentDialog.primaryButtonName}
                     </button>
@@ -100,7 +100,7 @@
                 {#if currentDialog.secondaryButtonCallback}
                     <button
                         on:click={() => invokeCallback("secondary")}
-                        class="flex w-full justify-center p-3 bg-gray-300 text-black rounded"
+                        class="flex shadow-md w-full font-bold items-center justify-center py-4 transition-colors hover:bg-gray-200 bg-gray-300 text-neutral-700 rounded-xl"
                     >
                         {currentDialog.secondaryButtonName}
                     </button>
@@ -108,7 +108,7 @@
                 {#if currentDialog.tertiaryButtonCallback}
                     <button
                         on:click={() => invokeCallback("tertiary")}
-                        class="flex w-full justify-center p-3 bg-gray-100 text-black rounded"
+                        class="flex shadow-md items-center justify-center w-full font-bold py-4 transition-colors hover:bg-gray-50 bg-gray-100 text-neutral-700 rounded-xl"
                     >
                         {currentDialog.tertiaryButtonName}
                     </button>

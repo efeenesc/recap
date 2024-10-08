@@ -1,3 +1,10 @@
+<!-- 
+Vectors and icons by Vlad Cristea
+https://www.figma.com/@thevladc?ref=svgrepo.com
+in CC Attribution License via SVG Repo
+https://www.svgrepo.com/
+-->
+
 <script lang="ts">
     export let strokeColor;
 </script>

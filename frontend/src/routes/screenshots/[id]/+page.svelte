@@ -16,7 +16,7 @@
     export let data: Data;
 
     async function goBack() {
-        await goto("/screenshots/");
+        window.history.back();
     }
 
     function keyUp(key: KeyboardEvent) {
@@ -58,7 +58,6 @@
                             <img
                                 alt="screenshot"
                                 class="transition-box-content max-h-[80vh] flex rounded-md object-contain select-none pointer-events-none"
-                                loading="lazy"
                                 src={screenshot.Screenshot}
                             />
                             <h3 class="flex-shrink-0 pt-1 pl-2">

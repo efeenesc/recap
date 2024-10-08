@@ -1,3 +1,9 @@
+<!--
+Vectors and icons by Konstantin Filatov
+https://www.figma.com/@thinkcly?ref=svgrepo.com
+in CC Attribution License via SVG Repo
+https://www.svgrepo.com/
+-->
 <script lang="ts">
   export let strokeColor;
   export let title;

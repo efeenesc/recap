@@ -1,3 +1,10 @@
+<!--
+Vectors and icons by Leonid Tsvetkov
+https://www.figma.com/@leonid?ref=svgrepo.com
+in CC Attribution License via SVG Repo
+https://www.svgrepo.com/
+-->
+
 <script lang="ts">
   export let strokeColor;
   export let title;

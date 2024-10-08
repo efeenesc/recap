@@ -1,3 +1,10 @@
+<!--
+Vectors and icons by Dazzle Ui
+https://dazzleui.gumroad.com/l/dazzleiconsfree?ref=svgrepo.com
+in CC Attribution License via SVG Repo
+https://www.svgrepo.com/
+-->
+
 <script lang="ts">
     export let strokeColor;
 </script>

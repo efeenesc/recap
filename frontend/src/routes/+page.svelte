@@ -1,6 +1,6 @@
 <script lang="ts">
     import { db } from "./../lib/wailsjs/go/models.ts";
-    import Carousel from "../components/carousel/carousel.svelte";
+    import Carousel from "../components/carousel/Carousel.svelte";
     import {
         GetScreenshots,
         GetReports,
@@ -12,7 +12,7 @@
     import type { ExtendedReport } from "../types/ExtendedReport.interface.ts";
     import type { ExtendedScreenshot } from "../types/ExtendedScreenshot.interface.ts";
     import { onMount } from "svelte";
-    import { lex, parse } from "$lib/markdown/MarkdownParser.ts";
+    import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts";
 
     // EventsOn(
     //     "rcv:greet",
@@ -61,7 +61,7 @@
     }
 
     function parseMd(content: string) {
-        return parse(lex(content));
+        return ConvertToHtmlTree(content);
     }
 
     onMount(() => {

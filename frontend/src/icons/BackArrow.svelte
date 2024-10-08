@@ -1,8 +1,13 @@
+<!--
+Vectors and icons by Element Plus
+https://github.com/element-plus/element-plus-icons?ref=svgrepo.com
+in MIT License via SVG Repo
+https://www.svgrepo.com/
+-->
 <script lang="ts">
     export let strokeColor;
 </script>
 
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg
     viewBox="0 0 1024 1024"
     xmlns="http://www.w3.org/2000/svg"

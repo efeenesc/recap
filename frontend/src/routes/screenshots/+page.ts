@@ -8,6 +8,8 @@ import {
     getScreenshots,
     getScreenshotsNewerThan,
 } from "../../utils/screenshot.ts";
+import { navigating } from '$app/stores'
+import type { PageLoad } from "./$types.js";
 
 // Pulls screenshot from database
 async function pullFromDb(
@@ -22,7 +24,6 @@ async function pullFromDb(
     }
 }
 
-// Tries to find the screenshot in the store
 async function pullFromStore(
     store: ExtendedScreenshot[]
 ): Promise<ExtendedScreenshot[] | undefined> {
@@ -42,6 +43,10 @@ async function pullFromStore(
         if (!newScreenshots) newVal = [...prev];
         else newVal = [...newScreenshots, ...prev];
 
+        // If navigating back from /screenshots/[id], don't trim the screenshot store down to 30 items
+        if (get(navigating)!.from!.route.id === "/screenshots/[id]")
+            return newVal;
+
         return newVal.splice(0, 30);
     });
 
@@ -49,7 +54,7 @@ async function pullFromStore(
 }
 
 /** @type {import('./$types').PageLoad} */
-export const load = async () => {
+export const load: PageLoad = async () => {
     const allScr = get(screenshotStore);
     let result = await pullFromStore(allScr);
 
@@ -59,10 +64,6 @@ export const load = async () => {
     }
 
     return {
-        streamed: {
-            items: {
-                subscribe: processedScreenshotStore.subscribe,
-            },
-        },
+        data: get(processedScreenshotStore)
     };
 };

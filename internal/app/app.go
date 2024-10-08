@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"embed"
-	"rcallport/internal/config"
-	"rcallport/internal/db"
+	"recap/internal/config"
+	"recap/internal/db"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -64,7 +64,7 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods) {
 	AppInstance := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "Rcallport",
+		Title:  "Recap",
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{

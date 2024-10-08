@@ -2,10 +2,10 @@ package main
 
 import (
 	"embed"
-	"rcallport/internal/app"
-	"rcallport/internal/db"
-	"rcallport/internal/llm"
-	"rcallport/internal/schedule"
+	"recap/internal/app"
+	"recap/internal/db"
+	"recap/internal/llm"
+	"recap/internal/schedule"
 )
 
 //go:embed all:frontend/build

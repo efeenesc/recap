@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"rcallport/internal/config"
-	"rcallport/internal/db"
+	"recap/internal/config"
+	"recap/internal/db"
 
 	"github.com/sqweek/dialog"
 )
@@ -43,7 +43,6 @@ func (a *AppMethods) GetScreenshots(limit int) []db.CaptureScreenshotImage {
 	if a.FunctionsGiven {
 		results, err := a.CGetScreenshots(limit)
 		if err != nil {
-			fmt.Println("FUUUCK")
 			fmt.Println(err)
 			return []db.CaptureScreenshotImage{}
 		}

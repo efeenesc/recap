@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { DatedReport } from './../../types/ExtendedReport.interface.ts';
 	import { reportStore } from '$lib/stores/ReportStore.ts';
     import gsap from "gsap";
-    import type { DatedReport } from "../../types/ExtendedReport.interface.ts";
     import { get, writable } from "svelte/store";
     import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
     import { addReportToStore, getReportsNewerThan, getReportsOlderThan } from "../../utils/report.ts";
@@ -11,53 +11,63 @@
     import Checkmark from "../../icons/Checkmark.svelte";
     import { addNewDialog } from "../../utils/dialog.ts";
     import MarkdownRenderer from "../../components/markdown-renderer/MarkdownRenderer.svelte";
-    import { lex, parse } from "$lib/markdown/MarkdownParser.ts";
+    import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts"
     import { scrollStore } from "$lib/stores/ScrollStore.ts";
     import { DeleteReportsById } from "$lib/wailsjs/go/app/AppMethods.js"
+    import type { Snapshot } from '@sveltejs/kit';
 
     interface Data {
-        streamed: {
-            items: {
-                subscribe: (
-                    run: (value: DatedReport) => void
-                ) => () => void;
-            };
-        };
+        data: DatedReport
     }
 
     export let data: Data;
 
     let selecting: boolean = false;
-    const rcvRep = writable<DatedReport | undefined>();
+    const rcvRep = writable<DatedReport | undefined>({});
     let checkedItems: { [key: string]: boolean | undefined } = {};
-
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
+    let loadMoreDivObserverTimeout: number | undefined;
     
     let scrollTop: number = 0;
+
+    // Variable assigned to during snapshot.recover. If assigned, scroll this element to previous Y position. 
+    let scrollTopSnapshot: number | undefined;
     let titleBackgroundOpacity: boolean = false;
 
     let allReportsLoaded: boolean = false;
 
+    $: rcvRep.set(data.data);
+
     $: {
-        console.log(scrollTop);
         if (scrollTop) {
             titleBackgroundOpacity = scrollTop > 100 ? true : false;
         }
     }
 
-    async function getData(): Promise<DatedReport> {
-        return new Promise((resolve) => {
-            data.streamed.items.subscribe((items) => {
-                rcvRep.set(items);
-                setTimeout(() => animateLoadForAllDivs(), 100);
-                resolve(items);
-            });
-        });
+    $: {
+        if (scrollTopSnapshot) {
+            const scroller = document.getElementsByClassName('scroller')[0];
+            setTimeout(() => {
+                scroller.scroll(0, scrollTopSnapshot!)
+            }, 0)
+        }
     }
 
-    function animateLoadForAllDivs() {
-        gsap.to(".report-div", {
+    export const snapshot: Snapshot<number> = {
+        capture: () => {
+            return scrollTop
+        },
+        restore: (snapshot) => {
+            scrollTopSnapshot = snapshot;
+        },
+    };
+
+    function animateLoad(id: string) {
+        gsap.fromTo('#' + id, {
+            opacity: 0,
+            scale: 0.9
+        }, {
             opacity: 1,
             scale: 1,
             duration: 1,
@@ -141,7 +151,9 @@
     });
 
     $: if (loadMoreDiv) {
-        loadMoreDivObserver.observe(loadMoreDiv);
+        loadMoreDivObserverTimeout = setTimeout(() => {
+            loadMoreDivObserver.observe(loadMoreDiv);
+        }, 2000)
     }
 
     onMount(() => {
@@ -158,7 +170,10 @@
             { threshold: 0.1 }
         ); // Trigger when 10% of the element is visible
 
-        return () => {unsubscribe()}
+        return () => {
+            unsubscribe();
+            clearTimeout(loadMoreDivObserverTimeout);
+        }
     });
 
     function selectAllFromDate(event: any, date: string) {
@@ -182,6 +197,7 @@
         if (!nav.from) return;
         const targetScr = document.getElementById("s" + nav.from.params)!;
         if (!targetScr) return;
+        console.log(targetScr);
         targetScr.classList.add("transition-box-container");
         targetScr.children[1].classList.add("transition-box-content");
     });
@@ -291,7 +307,7 @@
     /**
      * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2 
      */
-     async function deleteSelectedStep1() {
+    async function deleteSelectedStep1() {
         const allScrs = get(rcvRep);
         if (!allScrs) return;
 
@@ -341,7 +357,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
-    <div class="pb-2 gap-5 flex flex-col">
+    <div class="pb-2 flex flex-col">
         <div class="top-gradient-bg { titleBackgroundOpacity ? "after:opacity-100" : "after:opacity-0" } pt-10 sticky left-0 top-0 z-30 flex justify-between">
             <h1
                 class="page-title text-2xl -tracking-wide opacity-85 w-1/2 z-40 pointer-events-none"
@@ -353,6 +369,7 @@
             >
                 {#if selecting}
                     <div
+                        on:click={deleteSelectedStep1}
                         class="opacity-0 transition-all delay-200 {selecting
                             ? 'opacity-100'
                             : ''} -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer bg-red-400 text-black font-semibold rounded-lg"
@@ -370,86 +387,82 @@
             </div>
         </div>
 
-        {#await getData()}
-            Loading reports...
-        {:then}
-            {#if $rcvRep}
-                {#each Object.entries($rcvRep) as [date, reports]}
-                    <div>
-                        <div
-                            class="flex gap-5 sticky items-center top-16 z-40 pointer-events-none"
-                        >
-                            <h2 class="text-3xl font-bold tracking-wider">
-                                {date}
-                            </h2>
-                            <div class="checkbox opacity-0 pointer-events-none">
-                                <Checkbox
-                                    id={date}
-                                    bind:checked={checkedItems[date]}
-                                    on:checked={(e) =>
-                                        selectAllFromDate(e, date)}
-                                ></Checkbox>
-                            </div>
-                        </div>
-
-                        <div class="my-4 flex flex-col gap-4">
-                            {#each reports as r (r.ReportID)}
-                                <div
-                                    on:click={(event) =>
-                                        repClicked(date, r.ReportID, event)}
-                                    class="m-0 p-0"
-                                >
-                                    <div
-                                        id="r{r.ReportID}"
-                                        class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl opacity-0 scale-95"
-                                    >
-                                        {#if selecting}
-                                            <div
-                                                class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {r.Selected
-                                                    ? 'bg-neutral-500'
-                                                    : 'bg-neutral-800'}"
-                                            >
-                                                <div
-                                                    class="transition-all opacity-0 scale-90 w-[50%] {r.Selected
-                                                        ? 'opacity-90 scale-100'
-                                                        : ''}"
-                                                >
-                                                    <Checkmark
-                                                        strokeColor="#fff"
-                                                    ></Checkmark>
-                                                </div>
-                                            </div>
-                                        {/if}
-
-                                        <div
-                                            class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
-                                        >
-                                            <div class="-mt-4">
-                                                <MarkdownRenderer
-                                                    parsedContent={r.ParsedMarkdown}
-                                                ></MarkdownRenderer>
-                                            </div>
-                                        </div>
-                                        <h3 class="flex-shrink-0 pl-2 py-1">
-                                            Generated at {r.Time}
-                                        </h3>
-                                    </div>
-                                </div>
-                            {/each}
+        {#if $rcvRep}
+            {#each Object.entries($rcvRep) as [date, reports]}
+                <div>
+                    <div
+                        class="flex gap-5 sticky items-center top-16 z-40 pointer-events-none"
+                    >
+                        <h2 class="text-3xl font-bold tracking-wider">
+                            {date}
+                        </h2>
+                        <div class="checkbox opacity-0 pointer-events-none">
+                            <Checkbox
+                                id={date}
+                                bind:checked={checkedItems[date]}
+                                on:checked={(e) =>
+                                    selectAllFromDate(e, date)}
+                            ></Checkbox>
                         </div>
                     </div>
-                {/each}
-                {#if !allReportsLoaded}
-                    <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
-                {:else}
-                    <div></div>
-                {/if}
+
+                    <div class="my-4 flex flex-col gap-4">
+                        {#each reports as r (r.ReportID)}
+                            <div
+                                on:click={(event) =>
+                                    repClicked(date, r.ReportID, event)}
+                                data-intersect
+                                on:intersect={(e) => {r.Visible = e.detail.isIntersecting; animateLoad("r" + r.ReportID); }}
+                                class="m-0 p-0 {r.Visible ? '' : 'invisible'}"
+                            >
+                                <div
+                                    id="r{r.ReportID}"
+                                    class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl"
+                                >
+                                    {#if selecting}
+                                        <div
+                                            class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {r.Selected
+                                                ? 'bg-neutral-500'
+                                                : 'bg-neutral-800'}"
+                                        >
+                                            <div
+                                                class="transition-all opacity-0 scale-90 w-[50%] {r.Selected
+                                                    ? 'opacity-90 scale-100'
+                                                    : ''}"
+                                            >
+                                                <Checkmark
+                                                    strokeColor="#fff"
+                                                ></Checkmark>
+                                            </div>
+                                        </div>
+                                    {/if}
+
+                                    <div
+                                        class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
+                                    >
+                                        <div class="-mt-4">
+                                            <MarkdownRenderer
+                                                parsedContent={r.ParsedMarkdown}
+                                            ></MarkdownRenderer>
+                                        </div>
+                                    </div>
+                                    <h3 class="flex-shrink-0 pl-2 py-1">
+                                        Generated at {r.Time}
+                                    </h3>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            {/each}
+            {#if !allReportsLoaded}
+                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
             {:else}
-                No reports yet
+                <div></div>
             {/if}
-        {:catch error}
-            Error loading reports: {error.message}
-        {/await}
+        {:else}
+            No reports yet
+        {/if}
     </div>
 </div>
 

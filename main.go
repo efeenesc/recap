@@ -1,10 +1,10 @@
 package main
 
 import (
-	"rcallport/internal/db"
-	"rcallport/internal/llm"
-	"rcallport/internal/schedule"
-	"rcallport/internal/tray"
+	"recap/internal/db"
+	"recap/internal/llm"
+	"recap/internal/schedule"
+	"recap/internal/tray"
 )
 
 func addDbInitializers() *db.InitializerCallbacks {
@@ -17,15 +17,9 @@ func addDbInitializers() *db.InitializerCallbacks {
 
 func main() {
 	db.Initializers = *addDbInitializers()
-	db.Initialize(false) // Initialize database, throw away the client afterwards
-
-	llm.Initialize() // Setup LLM (text, vision) connectors from config
-
+	db.Initialize(false)  // Initialize database, throw away the client afterwards
+	llm.Initialize()      // Setup LLM (text, vision) connectors from config
 	schedule.Initialize() // Start the schedule in which timers are configured for automatic screenshots and vision processing
-
-	go func() {
-		tray.Initialize()
-	}()
-
+	tray.Initialize()
 	createApp()
 }

@@ -1,8 +1,14 @@
 <script lang="ts">
-  import type { MdNode } from '$lib/markdown/MarkdownParser.ts';
+  import type { MdNode } from '$lib/markdown/Markdown.interface.ts';
+  import { BrowserOpenURL } from '$lib/wailsjs/runtime/runtime.js'
 
   export let parsedContent: MdNode[] | string;
   let parsedNode: MdNode[];
+
+  function linkClicked(link: string | undefined) {
+    if (link)
+      BrowserOpenURL(link);
+  }
 
   $: {
     if (typeof parsedContent === 'string') {
@@ -16,7 +22,7 @@
 {#if parsedNode}
   {#each parsedNode as node (node)}
     {#if node.type === 'text'}
-      {node.content}
+      <span>{node.content}</span>
     {:else if node.type === 'p'}
       <p>
         <svelte:self parsedContent={node.content} />
@@ -83,6 +89,14 @@
       </del>
     {:else if node.type === 'br'}
       <br />
+    
+    {:else if node.type === 'a'}
+      <!-- svelte-ignore a11y-missing-attribute -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <a on:click={() => linkClicked(node.url)} target="_blank" class="flex">
+        <svelte:self parsedContent={node.content}></svelte:self>
+      </a>
     {/if}
   {/each}
 {/if}
@@ -91,11 +105,11 @@
 
 <style global lang="postcss">
   * {
-    font-size: 1.1em
+    font-size: 1em
   }
   
   strong {
-    font-weight: 600;
+    font-weight: 400;
   }
 
   h2 {
@@ -118,5 +132,20 @@
   code {
     margin-left: 6px;
     margin-right: 0px;
+  }
+
+  a {
+    text-decoration: underline;
+    text-decoration-color: white;
+    cursor: pointer;
+    margin: 0px;
+    padding: 0px;
+  }
+
+  br {
+    content: "";
+    display: block;
+    height: 10px;
+    width: 100px;
   }
 </style>

@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"path"
-	"rcallport/internal/config"
-	"rcallport/internal/utils"
+	"recap/internal/config"
+	"recap/internal/utils"
 	"time"
 )
 
@@ -57,7 +57,7 @@ func UpdateScreenshotDescription(db *sql.DB, screenshot_id int, description stri
 	UPDATE screenshots
 	SET description = ?,
 	gen_with_api = ?,
-	gen_with_model = ?,
+	gen_with_model = ?
 	WHERE screenshot_id = ?`, description, genWithApi, genWithModel, screenshot_id)
 }
 
