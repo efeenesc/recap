@@ -3,36 +3,60 @@ package screenshot
 import (
 	"fmt"
 	"image"
+	"image/jpeg"
 	"image/png"
 	"log"
 	"os"
 	"path"
 
-	"rcallport/internal/config"
+	"recap/internal/config"
 
 	"github.com/google/uuid"
 	"github.com/kbinani/screenshot"
 )
 
-func saveScreenshot(img *image.RGBA) (string, error) {
-	fileName := fmt.Sprintf("%s.png", uuid.New())
-
-	proot, _ := config.GetProjectRoot()
-	file, err := os.Create(path.Join(proot, config.Config.System.ScreenshotPath, fileName))
+// Saves the provided RGBA image as a JPEG file in the specified directory. Called by TakeScreenshot.
+// Returns error if the operation fails
+func saveScreenshotJPEG(img *image.RGBA, filename string, quality int) error {
+	file, err := os.Create(path.Join(config.Config.ScrPath, filename))
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer file.Close()
 
-	err = png.Encode(file, img)
+	err = jpeg.Encode(file, img, &jpeg.Options{Quality: quality})
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return fileName, nil
+	return nil
 }
 
-func TakeScreenshot() string {
+// Saves the provided RGBA image as a PNG file in the specified directory. Called by TakeScreenshot.
+// Returns error if the operation fails
+func saveScreenshotPNG(img *image.RGBA, filename string) error {
+	file, err := os.Create(path.Join(config.Config.ScrPath, filename))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	enc := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+
+	err = enc.Encode(file, img)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Captures the entire screen based on the bounds of active displays. The end result is one image showing all screens.
+// It saves the captured image using the saveScreenshot function once as PNG with best compression, and once as JPEG with 40% quality for thumbnails.
+// Returns PNG filename first, the JPEG thumbnail filename second.
+func TakeScreenshot() (string, string) {
 	var displayBounds image.Rectangle
 	displayBounds.Min.X = 0
 	displayBounds.Min.Y = 0
@@ -50,9 +74,16 @@ func TakeScreenshot() string {
 		panic(err)
 	}
 
-	fileName, err := saveScreenshot(img)
+	scrUuid := uuid.New()
+	fullFilename := fmt.Sprintf("%s.png", scrUuid)
+	thumbFilename := fmt.Sprintf("%s_thumb.jpg", scrUuid)
+
+	err = saveScreenshotPNG(img, fullFilename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return fileName
+
+	err = saveScreenshotJPEG(img, thumbFilename, 40)
+
+	return fullFilename, thumbFilename
 }

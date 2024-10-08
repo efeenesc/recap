@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    font-family: "Inter"; /* Font loaded with @fontsource/inter package */
+}
+
+body {
+    overflow: hidden;
+    margin: 0;
+}
+
+:root::view-transition-old(*),
+:root::view-transition-new(*) {
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 100%;
+    block-size: auto;
+
+    animation-duration: inherit;
+    animation-fill-mode: inherit;
+    animation-delay: inherit;
+}
+
+/* Keyframes for blending when there are 2 images */
+@keyframes -ua-mix-blend-mode-plus-lighter {
+    from {
+        mix-blend-mode: overlay;
+    }
+    to {
+        mix-blend-mode: overlay;
+    }
+}
+
+@keyframes -ua-view-transition-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+::view-transition-old(:root)
+::view-transition-new(:root)
+::view-transition-old(page-container)
+::view-transition-new(page-container)
+::view-transition-old(exclude-transition)
+::view-transition-new(exclude-transition)
+::view-transition-old(*)
+::view-transition-new(*) {
+    animation: none;
+}
+
+::view-transition-old(page-title)
+::view-transition-new(page-title)
+::view-transition-old(transition-box-container)
+::view-transition-new(transition-box-container)
+::view-transition-old(transition-box-content)
+::view-transition-new(transition-box-content) {
+    animation: -ua-mix-blend-mode-plus-lighter;
+}
+
+.exclude-transition {
+    view-transition-name: exclude-transition;
+}
+
+.page-title {
+    view-transition-name: page-title;
+}
+
+.transition-box-container {
+    view-transition-name: transition-box-container;
+}
+
+.transition-box-content {
+    view-transition-name: transition-box-content;
+}

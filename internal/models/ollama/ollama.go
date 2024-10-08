@@ -2,15 +2,11 @@ package ollama
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"os"
-	"path"
-	"rcallport/internal/config"
+	"recap/internal/utils"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +19,8 @@ type AIModel struct {
 	mu           sync.Mutex // Added mutex for thread-safety
 }
 
+// Starts or resets a timer that closes the HTTP client
+// after 5 minutes of inactivity. If the client is already active, it resets the timer.
 func (a *AIModel) startClientDeadline() {
 	if a.clientTicker != nil {
 		a.clientTicker.Reset(5 * time.Minute)
@@ -52,6 +50,8 @@ func (a *AIModel) startClientDeadline() {
 	}()
 }
 
+// Generates text based on the provided prompt using the AI client.
+// It returns the generated text or an error if client creation fails.
 func (a *AIModel) GenerateText(prompt string) (string, error) {
 	client := a.generateClient()
 	if client == nil {
@@ -62,6 +62,8 @@ func (a *AIModel) GenerateText(prompt string) (string, error) {
 	return sendToOllama(client, a.model, nil, prompt)
 }
 
+// Generates a description for a screenshot specified by its filename
+// using the AI client. It returns the description or an error if client creation fails.
 func (a *AIModel) DescribeScreenshot(fileName string, prompt string) (string, error) {
 	client := a.generateClient()
 	if client == nil {
@@ -72,6 +74,8 @@ func (a *AIModel) DescribeScreenshot(fileName string, prompt string) (string, er
 	return sendToOllama(client, a.model, &fileName, prompt)
 }
 
+// Generates descriptions for multiple screenshots
+// provided in the fileNames slice. It returns concatenated descriptions or an error.
 func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (string, error) {
 	client := a.generateClient()
 	if client == nil {
@@ -92,10 +96,12 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 	return strings.Join(descriptions, "\n"), nil
 }
 
+// Sends a request to the Ollama API with the specified client, model,
+// and image data (if applicable). It returns the response from the API or an error.
 func sendToOllama(client *http.Client, modelName string, fileName *string, prompt string) (string, error) {
 	var images []string
 	if fileName != nil {
-		imageBase64 := readImageToBase64(*fileName)
+		imageBase64 := utils.ReadImageToBase64(*fileName)
 		if imageBase64 == "" {
 			return "", fmt.Errorf("failed to read image file")
 		}
@@ -133,19 +139,8 @@ func sendToOllama(client *http.Client, modelName string, fileName *string, promp
 	return ollamaResponse.Response, nil
 }
 
-func readImageToBase64(fileName string) string {
-	proot, _ := config.GetProjectRoot()
-	fullPath := path.Join(proot, config.Config.System.ScreenshotPath, fileName)
-
-	bytes, err := os.ReadFile(fullPath)
-	if err != nil {
-		log.Printf("Error reading image file: %v", err)
-		return ""
-	}
-
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(bytes)
-}
-
+// Creates and returns a new HTTP client if one does not already exist.
+// It ensures thread-safe access to the client instance.
 func (a *AIModel) generateClient() *http.Client {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -157,6 +152,7 @@ func (a *AIModel) generateClient() *http.Client {
 	return a.client
 }
 
+// Initializes a new AIModel instance with the specified model name.
 func CreateAPIClient(model string) *AIModel {
 	return &AIModel{model: model}
 }

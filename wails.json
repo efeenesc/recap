@@ -1,0 +1,15 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "recap",
+  "outputfilename": "recap",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build --base=./",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "frontend:dir": "./frontend",
+  "wailsjsdir": "./frontend/src/lib",
+  "author": {
+    "name": "efeenesc",
+    "email": "efeenescamci@icloud.com"
+  }
+}
