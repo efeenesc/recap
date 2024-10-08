@@ -17,7 +17,6 @@
     const dispatch = createEventDispatcher();
 
     function handleChange(event: any) {
-        console.log(event);
         let returnValue;
 
         // Check if the event is a string

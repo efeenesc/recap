@@ -17,13 +17,13 @@
     import type { Snapshot } from '@sveltejs/kit';
 
     interface Data {
-        data: DatedReport
+        data: DatedReport | undefined
     }
 
     export let data: Data;
 
     let selecting: boolean = false;
-    const rcvRep = writable<DatedReport | undefined>({});
+    const rcvRep = writable<DatedReport | undefined>();
     let checkedItems: { [key: string]: boolean | undefined } = {};
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
@@ -36,6 +36,7 @@
     let titleBackgroundOpacity: boolean = false;
 
     let allReportsLoaded: boolean = false;
+    let noReports: boolean = false;
 
     $: rcvRep.set(data.data);
 
@@ -117,7 +118,8 @@
         }
 
         if (oldestKnownId === undefined) {
-            console.log("No existing screenshots found");
+            console.log("No existing reports found");
+            allReportsLoaded = false;
             return;
         }
 
@@ -128,7 +130,6 @@
             );
 
             if (newReports === null || newReports.length === 0) {
-                allReportsLoaded = true;
                 return;
             }
 
@@ -141,19 +142,10 @@
         }
     }
 
-    onDestroy(() => {
-        EventsOff("rcv:llmran");
-        try {
-            loadMoreDivObserver.disconnect();
-        } catch (err: any) {
-            console.log("loadMoreDivObserver was already unsubscribed from. Continuing...")
-        }
-    });
-
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 2000)
+        }, 100)
     }
 
     onMount(() => {
@@ -172,7 +164,9 @@
 
         return () => {
             unsubscribe();
+            loadMoreDivObserver.disconnect();
             clearTimeout(loadMoreDivObserverTimeout);
+            EventsOff("rcv:llmran");
         }
     });
 
@@ -197,7 +191,6 @@
         if (!nav.from) return;
         const targetScr = document.getElementById("s" + nav.from.params)!;
         if (!targetScr) return;
-        console.log(targetScr);
         targetScr.classList.add("transition-box-container");
         targetScr.children[1].classList.add("transition-box-content");
     });
@@ -387,7 +380,7 @@
             </div>
         </div>
 
-        {#if $rcvRep}
+        {#if $rcvRep !== undefined}
             {#each Object.entries($rcvRep) as [date, reports]}
                 <div>
                     <div
@@ -456,12 +449,12 @@
                 </div>
             {/each}
             {#if !allReportsLoaded}
-                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
+                <div class="h-10 w-full" bind:this={loadMoreDiv}></div>
             {:else}
                 <div></div>
             {/if}
         {:else}
-            No reports yet
+            No reports yet. Create a report from your screenshots to get started!
         {/if}
     </div>
 </div>

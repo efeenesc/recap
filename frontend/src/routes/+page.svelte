@@ -1,11 +1,9 @@
 <script lang="ts">
-    import { db } from "./../lib/wailsjs/go/models.ts";
     import Carousel from "../components/carousel/Carousel.svelte";
     import {
         GetScreenshots,
         GetReports,
     } from "../lib/wailsjs/go/app/AppMethods.js";
-    import { EventsOn } from "../lib/wailsjs/runtime/runtime.js";
     import { timeSinceUNIXSeconds } from "../utils/timeSince.js";
     import gsap from "gsap";
     import MarkdownRenderer from "../components/markdown-renderer/MarkdownRenderer.svelte";
@@ -13,11 +11,6 @@
     import type { ExtendedScreenshot } from "../types/ExtendedScreenshot.interface.ts";
     import { onMount } from "svelte";
     import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts";
-
-    // EventsOn(
-    //     "rcv:greet",
-    //     (msg) => ()
-    // );
 
     let screenshots: ExtendedScreenshot[] = [];
     let reports: ExtendedReport[] = [];
@@ -46,7 +39,7 @@
         noReports = false;
         reports = res.map((r: any) => {
             r.Date = timeSinceUNIXSeconds(r.Timestamp);
-            r.ParsedMarkdown = parseMd(r.Content).content;
+            r.ParsedMarkdown = ConvertToHtmlTree(r.Content).content;
             return r;
         });
     }
@@ -58,10 +51,6 @@
             duration: 1,
             ease: "expo.out",
         });
-    }
-
-    function parseMd(content: string) {
-        return ConvertToHtmlTree(content);
     }
 
     onMount(() => {
@@ -83,14 +72,14 @@
 
     <section class="relative">
         <h2 class="text-3xl font-bold tracking-wider">My screenshots</h2>
-        <div class="my-4 h-[300px] flex">
-            <div class="absolute" style="display: unset">
-                {#if !noScreenshots}
+        <div class="my-4 {noScreenshots ? "h-fit" : "h-[300px]" } flex">
+            {#if !noScreenshots}
+                <div class="absolute" style="display: unset">
                     <Carousel let:onLoad>
                         {#each screenshots as s (s.CaptureID)}
                             <div
                                 id="s{s.CaptureID}"
-                                class="rounded-lg h-[300px] bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900 
+                                class="rounded-lg h-[300px] bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900
                                 outline w-max overflow-hidden outline-1 p-1 mr-5 shadow-2xl opacity-0 scale-95"
                             >
                                 <img
@@ -109,26 +98,26 @@
                             </div>
                         {/each}
                     </Carousel>
-                {:else}
-                    <div class="flex flex-grow flex-col w-max h-[300px]">
-                        <h1 class="text-2xl">
-                            Your screenshots will appear here.
-                        </h1>
-                        <h1 class="text-2xl">
-                            Turn scheduled screenshots on to have the app get
-                            them for you 📸
-                        </h1>
-                    </div>
-                {/if}
-            </div>
+                </div>
+            {:else}
+                <div class="flex flex-grow flex-col w-max">
+                    <span class="text-2xl">
+                        Your screenshots will appear here.
+                    </span>
+                    <span class="text-2xl">
+                        Turn scheduled screenshots on to have the app get them
+                        for you 📸
+                    </span>
+                </div>
+            {/if}
         </div>
     </section>
 
     <section class="w-full pt-6">
         <h2 class="text-3xl font-bold tracking-wider">My reports</h2>
-        <div class="w-full my-4 h-[300px] flex">
-            <div class="absolute w-max">
-                {#if !noReports}
+        <div class="w-full my-4 {noReports ? "h-fit" : "h-[300px]" } flex">
+            {#if !noReports}
+                <div class="absolute w-max">
                     <Carousel let:onLoad>
                         {#each reports as r (r.ReportID)}
                             <div
@@ -154,18 +143,18 @@
                             </div>
                         {/each}
                     </Carousel>
-                {:else}
-                    <div class="flex flex-grow flex-col w-max h-[300px]">
-                        <h1 class="text-2xl">
-                            Your generated reports will appear here.
-                        </h1>
-                        <h1 class="text-2xl">
-                            Go to the screenshots page, select your screenshots, and click
-                            'Report'! 🪄
-                        </h1>
-                    </div>
-                {/if}
-            </div>
+                </div>
+            {:else}
+                <div class="flex flex-grow flex-col w-full">
+                    <span class="text-xl">
+                        Your generated reports will appear here.
+                    </span>
+                    <span class="text-xl">
+                        Go to the screenshots page, select your screenshots, and
+                        click 'Report'! 🪄
+                    </span>
+                </div>
+            {/if}
         </div>
     </section>
 </div>

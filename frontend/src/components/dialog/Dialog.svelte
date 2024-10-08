@@ -23,7 +23,6 @@
     }
 
     function showDialog(dialog: DialogData): void {
-        console.log("Showing", dialog);
         currentDialog = dialog;
     }
 

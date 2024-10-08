@@ -10,7 +10,7 @@ export const processedReportStore = derived<
     DatedReport | undefined
 >(reportStore, ($rep) => {
     const reports: DatedReport = {}
-    if (!$rep) return;
+    if (!$rep || !$rep.length) return;
     $rep.map((r: ExtendedReport) => {
         r.Date = formatDate(r.Timestamp);
         r.ParsedMarkdown = ConvertToHtmlTree(r.Content).content as MdNode[];
