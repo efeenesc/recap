@@ -1,4 +1,6 @@
-# Rcallport
+# Recap
+
+# This branch is an old version of Recap. It has no GUI and is not recommended for use.
 
 ### Description
 
@@ -32,7 +34,7 @@ Due to restrictions in Gemini's free model, only 1,500 requests can be sent in a
 
 ### Build
 
-Build with `go build -ldflags -H=windowsgui`.
+Build with `go build`.
 
 ### Additional information
 
