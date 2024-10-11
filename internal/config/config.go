@@ -27,6 +27,8 @@ type AppConfig struct {
 	ReportPrompt              string `json:"ReportPrompt"`
 	OllamaURL                 string `json:"OllamaURL"`
 	GeminiAPIKey              string `json:"GeminiAPIKey"`
+	OpenAIAPIKey              string `json:"OpenAIAPIKey"`
+	OpenRouterAPIKey          string `json:"OpenRouterAPIKey"`
 }
 
 type AppInfo struct {

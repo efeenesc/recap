@@ -9,33 +9,19 @@ import (
 	"strings"
 )
 
-func ReadImageToBase64(fileName string) string {
-	fullPath := path.Join(config.Config.ScrPath, fileName)
-
-	bytes, err := os.ReadFile(fullPath)
-	if err != nil {
-		log.Printf("Error reading image file: %v", err)
-		return ""
-	}
-
-	if strings.HasSuffix(fileName, ".png") {
-		return "data:image/png;base64," + base64.StdEncoding.EncodeToString(bytes)
-	} else {
-		return "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(bytes)
-	}
-}
-
+// Reads the bytes from an image
 func readImageBytes(filepath string) (*[]byte, error) {
 	bytes, err := os.ReadFile(filepath)
 
 	if err != nil {
-		log.Printf("Error reading image file: %v", err)
+		log.Printf("Error reading image file: %v\n", err)
 		return nil, err
 	}
 
 	return &bytes, err
 }
 
+// Formats the
 func formatResponse(bytes *[]byte, filename string) string {
 	if strings.HasSuffix(filename, ".png") {
 		return "data:image/png;base64," + base64.StdEncoding.EncodeToString(*bytes)
@@ -84,4 +70,16 @@ func ReadImageToBase64PreferFull(fullName string, thumbName *string) string {
 	}
 
 	return ""
+}
+
+// Reads a given image filename to Base64. Can be used with PNG and JPEG files
+func ReadImageToBase64(fileName string) string {
+	fullPath := path.Join(config.Config.ScrPath, fileName)
+
+	bytes, err := readImageBytes(fullPath)
+	if err != nil {
+		return ""
+	}
+
+	return formatResponse(bytes, fileName)
 }

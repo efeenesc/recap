@@ -57,8 +57,6 @@ export const load = async () => {
         result = await pullFromDb(30);
     }
 
-    console.log(get(processedReportStore));
-
     return {
         data: get(processedReportStore)
     };

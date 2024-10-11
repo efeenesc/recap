@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"recap/internal/config"
+	"recap/internal/models"
 	"reflect"
 	"strconv"
 )
@@ -20,43 +21,52 @@ type SettingDisplayProps struct {
 	Description string `json:"Description"`
 	Category    string `json:"Category"`
 	InputType   string `json:"InputType"`
+
+	// Contains options for the APIPicker input type
+	Options *[]string `json:"Options"`
 }
 
 var defaultSettings = map[string]string{
 	"ScrPath":                   "./screenshots",
-	"DescGenAPI":                "gemini",
+	"DescGenAPI":                "Gemini",
 	"DescGenModel":              "gemini-1.5-flash",
 	"DescGenPrompt":             "This image was captured on a user's computer. Describe what the user was working on. Do not expose passwords, other people's names, emails, and other private and secure information.",
 	"DescGenIntervalMins":       "120", // Default interval in minutes
 	"DescGenIntervalEnabled":    "1",   // 1 for enabled, 0 for disabled
 	"ScreenshotIntervalMins":    "10",  // Default interval in minutes
 	"ScreenshotIntervalEnabled": "1",   // 1 for enabled, 0 for disabled
-	"ReportAPI":                 "gemini",
+	"ReportAPI":                 "Gemini",
 	"ReportModel":               "gemini-1.5-flash",
 	"ReportAutoEnabled":         "0",
 	"ReportAutoAt":              "17:00", // Default auto report time
 	"ReportPrompt":              "You are an AI assistant tasked with generating a daily activity report for a user based on a series of visual descriptions captured from their computer screen throughout the day. Your job is to summarize this data into brief items describing what the user worked on today.",
 	"OllamaURL":                 "http://localhost:11434",
 	"GeminiAPIKey":              "your-gemini-api-key",
+	"OpenAIAPIKey":              "your-openai-api-key",
+	"OpenRouterAPIKey":          "your-openrouter-api-key",
 }
 
 func GetDisplayValues() map[string]SettingDisplayProps {
+	apiList := models.ListRegisteredAPIs()
+
 	var settingKeyDisplayVals = map[string]SettingDisplayProps{
 		"ScrPath":                   {DisplayName: "Path", Description: "Specify the directory where screenshots will be saved on your device", Category: "Screenshots", InputType: "FolderPicker"},
-		"DescGenAPI":                {DisplayName: "API", Description: "Select the AI service to use for generating descriptions of your screenshots", Category: "Vision", InputType: "APIPicker"},
+		"DescGenAPI":                {DisplayName: "API", Description: "Select the AI service to use for generating descriptions of your screenshots", Category: "Vision", InputType: "APIPicker", Options: &apiList},
 		"DescGenModel":              {DisplayName: "Model", Description: "Choose the specific AI model for analyzing screenshots and generating descriptions", Category: "Vision", InputType: "APIModelPicker"},
 		"DescGenPrompt":             {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating screenshot descriptions", Category: "Vision", InputType: "ExtendedTextInput"},
 		"DescGenIntervalEnabled":    {DisplayName: "Schedule", Description: "Toggle automatic description generation after Recap starts", Category: "Vision", InputType: "Boolean"},
 		"DescGenIntervalMins":       {DisplayName: "Interval", Description: "Set how often (in minutes) screenshots should be automatically sent for description generation", Category: "Vision", InputType: "NumberInput"},
 		"ScreenshotIntervalEnabled": {DisplayName: "Schedule", Description: "Toggle automatic screenshot capturing at regular intervals after Recap starts", Category: "Screenshots", InputType: "Boolean"},
 		"ScreenshotIntervalMins":    {DisplayName: "Interval", Description: "Define how frequently (in minutes) automatic screenshots should be taken", Category: "Screenshots", InputType: "NumberInput"},
-		"ReportAPI":                 {DisplayName: "API", Description: "Choose the AI service for generating reports based on your screenshot descriptions", Category: "Reports", InputType: "APIPicker"},
+		"ReportAPI":                 {DisplayName: "API", Description: "Choose the AI service for generating reports based on your screenshot descriptions", Category: "Reports", InputType: "APIPicker", Options: &apiList},
 		"ReportModel":               {DisplayName: "Model", Description: "Select the specific AI model for creating reports from your screenshot descriptions", Category: "Reports", InputType: "APIModelPicker"},
 		"ReportAutoEnabled":         {DisplayName: "Schedule", Description: "Enable or disable automatic daily report generation", Category: "Reports", InputType: "Boolean"},
 		"ReportAutoAt":              {DisplayName: "Time", Description: "Set the specific time each day when an automatic report should be generated", Category: "Reports", InputType: "TimePicker"},
 		"ReportPrompt":              {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating reports from your screenshot descriptions", Category: "Reports", InputType: "ExtendedTextInput"},
 		"OllamaURL":                 {DisplayName: "Ollama URL", Description: "Enter the URL (including port) for your Ollama instance. The default is http://localhost:11434.", Category: "Models", InputType: "URLInput"},
 		"GeminiAPIKey":              {DisplayName: "Gemini API key", Description: "Enter your Gemini API key. You can obtain a free API key from Google.", Category: "Models", InputType: "TextInput"},
+		"OpenAIAPIKey":              {DisplayName: "OpenAI API key", Description: "Enter your OpenAI API key. You can obtain an API key from https://platform.openai.com/api-keys.", Category: "Models", InputType: "TextInput"},
+		"OpenRouterAPIKey":          {DisplayName: "OpenRouter API key", Description: "Enter your OpenRouter API key. You can obtain an API key from https://openrouter.ai/settings/keys.", Category: "Models", InputType: "TextInput"},
 	}
 
 	return settingKeyDisplayVals
@@ -118,6 +128,8 @@ func LoadConfig() (*config.AppConfig, error) {
 		ReportPrompt:              defaultSettings["ReportPrompt"],
 		OllamaURL:                 defaultSettings["OllamaURL"],
 		GeminiAPIKey:              defaultSettings["GeminiAPIKey"],
+		OpenAIAPIKey:              defaultSettings["OpenAIAPIKey"],
+		OpenRouterAPIKey:          defaultSettings["OpenRouterAPIKey"],
 	}
 
 	// Update config with values from the database, validating them
@@ -153,6 +165,10 @@ func LoadConfig() (*config.AppConfig, error) {
 			loadedConf.OllamaURL = setting.Value
 		case "GeminiAPIKey":
 			loadedConf.GeminiAPIKey = setting.Value
+		case "OpenAIAPIKey":
+			loadedConf.OpenAIAPIKey = setting.Value
+		case "OpenRouterAPIKey":
+			loadedConf.OpenRouterAPIKey = setting.Value
 		}
 	}
 

@@ -1,4 +1,4 @@
-package ollama
+package openai
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"recap/internal/config"
 	"recap/internal/models"
 	"recap/internal/utils"
 	"strings"
@@ -14,10 +15,12 @@ import (
 )
 
 type AIModel struct {
-	apiName      string
+	ApiName      string
+	ApiKeyPtr    *string
 	client       *http.Client
 	clientTicker *time.Ticker
-	model        string
+	Endpoint     string // Used to set endpoint to OpenAI's API, or OpenRouter's
+	Model        string
 	mu           sync.Mutex // Added mutex for thread-safety
 }
 
@@ -61,7 +64,7 @@ func (a *AIModel) GenerateText(prompt string) (string, error) {
 	}
 	defer a.startClientDeadline()
 
-	return sendToOllama(client, a.model, nil, prompt)
+	return sendToOpenAI(client, a.Model, nil, prompt, a.Endpoint, *a.ApiKeyPtr)
 }
 
 // Generates a description for a screenshot specified by its filename
@@ -73,7 +76,7 @@ func (a *AIModel) DescribeScreenshot(fileName string, prompt string) (string, er
 	}
 	defer a.startClientDeadline()
 
-	return sendToOllama(client, a.model, &fileName, prompt)
+	return sendToOpenAI(client, a.Model, &fileName, prompt, a.Endpoint, *a.ApiKeyPtr)
 }
 
 // Generates descriptions for multiple screenshots
@@ -88,9 +91,9 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 	var descriptions []string
 
 	for _, fn := range fileNames {
-		res, err := sendToOllama(client, a.model, &fn, prompt)
+		res, err := sendToOpenAI(client, a.Model, &fn, prompt, a.Endpoint, *a.ApiKeyPtr)
 		if err != nil {
-			return "", fmt.Errorf("error sending file to Ollama: %w", err)
+			return "", fmt.Errorf("error sending file to OpenAI: %w", err)
 		}
 		descriptions = append(descriptions, res)
 	}
@@ -98,21 +101,21 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 	return strings.Join(descriptions, "\n"), nil
 }
 
-// Sends a request to the Ollama API with the specified client, model,
+// Sends a request to the OpenAI API with the specified client, model,
 // and image data (if applicable). It returns the response from the API or an error.
-func sendToOllama(client *http.Client, modelName string, fileName *string, prompt string) (string, error) {
+func sendToOpenAI(client *http.Client, modelName string, fileName *string, prompt string, endpoint string, apiKey string) (string, error) {
 	var images []string
-	if fileName == nil {
-		return "", fmt.Errorf("No file name provided\n")
+	if fileName != nil {
+		imageBase64 := utils.ReadImageToBase64(*fileName)
+		if imageBase64 == "" {
+			return "", fmt.Errorf("failed to read image file")
+		}
+		images = append(images, imageBase64)
 	}
 
-	imageBase64 := utils.ReadImageToBase64(*fileName)
-	if imageBase64 == "" {
-		return "", fmt.Errorf("failed to read image file")
-	}
-	images = []string{imageBase64}
+	apiBearerAuth := fmt.Sprintf("Bearer %s", apiKey)
 
-	requestBody := OllamaRequest{
+	requestBody := OpenAIRequest{
 		Model:  modelName,
 		Prompt: prompt,
 		Stream: false,
@@ -124,23 +127,36 @@ func sendToOllama(client *http.Client, modelName string, fileName *string, promp
 		return "", fmt.Errorf("error marshalling JSON request body: %w", err)
 	}
 
-	res, err := client.Post("http://localhost:11434/api/generate", "application/json", bytes.NewBuffer(preparedBody))
-	readRes, _ := io.ReadAll(res.Body)
-
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(preparedBody))
 	if err != nil {
-		fmt.Printf("Error from Ollama: %s\n", readRes)
-		return "", fmt.Errorf("error sending request to Ollama: %v", err.Error())
+		return "", fmt.Errorf("error creating request to OpenAI: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", apiBearerAuth) // Replace with your actual API key
+
+	res, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error sending request to OpenAI: %w", err)
 	}
 	defer res.Body.Close()
 
-	var ollamaResponse OllamaFullResponse
-	err = json.Unmarshal(readRes, &ollamaResponse)
-	if err != nil {
-		fmt.Printf("error decoding Ollama response: %v", err.Error())
-		return "", fmt.Errorf("error decoding Ollama response: %v", err.Error())
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		errorMessage, _ := io.ReadAll(res.Body)
+		return "", fmt.Errorf("OpenAI API returned non-2xx status: %d - %s", res.StatusCode, string(errorMessage))
 	}
 
-	return ollamaResponse.Response, nil
+	readRes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response from OpenAI: %w", err)
+	}
+
+	var openaiResponse OpenAIFullResponse
+	err = json.Unmarshal(readRes, &openaiResponse)
+	if err != nil {
+		return "", fmt.Errorf("error decoding OpenAI response: %v", err.Error())
+	}
+
+	return openaiResponse.Response, nil
 }
 
 // Creates and returns a new HTTP client if one does not already exist.
@@ -157,18 +173,18 @@ func (a *AIModel) generateClient() *http.Client {
 }
 
 func (a *AIModel) GetAPIName() string {
-	return a.apiName
+	return a.ApiName
 }
 
 func (a *AIModel) GetAPIModelName() string {
-	return a.model
+	return a.Model
 }
 
 // Initializes a new AIModel instance with the specified model name.
 func CreateAPIClient(model string) models.TextVisionAPI {
-	return &AIModel{apiName: "Ollama", model: model}
+	return &AIModel{ApiName: "OpenAI", Endpoint: "https://api.openai.com/v1/completions", Model: model, ApiKeyPtr: &config.Config.OpenAIAPIKey}
 }
 
 func init() {
-	models.RegisterAPI("Ollama", CreateAPIClient)
+	models.RegisterAPI("OpenAI", CreateAPIClient)
 }

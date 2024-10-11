@@ -6,6 +6,7 @@ import (
 	"log"
 	"path/filepath"
 	"recap/internal/config"
+	"recap/internal/models"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ import (
 )
 
 type AIModel struct {
+	apiName      string
 	client       *genai.Client
 	clientTicker *time.Ticker
 	model        string
@@ -163,7 +165,19 @@ func (a *AIModel) generateClient() (*genai.Client, context.Context) {
 	return a.client, ctx
 }
 
+func (a *AIModel) GetAPIName() string {
+	return a.apiName
+}
+
+func (a *AIModel) GetAPIModelName() string {
+	return a.model
+}
+
 // CreateAPIClient is a factory method for creating the AI client
-func CreateAPIClient(model string) *AIModel {
-	return &AIModel{model: model}
+func CreateAPIClient(model string) models.TextVisionAPI {
+	return &AIModel{apiName: "Gemini", model: model}
+}
+
+func init() {
+	models.RegisterAPI("Gemini", CreateAPIClient)
 }
