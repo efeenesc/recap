@@ -38,6 +38,10 @@ type AppMethods struct {
 	CGetConfig                   func() (*config.AppConfig, error)
 	CGetDisplayValues            func() map[string]db.SettingDisplayProps
 	CUpdateSettings              func(map[string]string) error
+	CUpdateInfo                  func(map[string]string) error
+	CWriteInfo                   func(key, value string) error
+	CReadInfo                    func(key string) (*db.Info, error)
+	CReadAllInfo                 func() (map[string]string, error)
 }
 
 func NewApp() *App {

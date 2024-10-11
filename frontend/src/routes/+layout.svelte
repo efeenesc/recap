@@ -6,12 +6,28 @@
     import Dialog from "../components/dialog/Dialog.svelte";
     import { updateScroll } from "$lib/stores/ScrollStore.ts";
     import { createLazyIntersect } from "../components/lazy-intersect/LazyIntersect.ts";
-
+    import { ReadInfo, UpdateSettings, UpdateInfo } from "$lib/wailsjs/go/app/AppMethods.js"
+    import FirstTimeSetup from "../components/first-time-setup/FirstTimeSetup.svelte";
+    import type { BasicSetting } from "../types/ExtendedSettings.interface.ts";
 
     let bodyFullHeight: number;
     let scrollHeight: number;
     let bodyContent: HTMLDivElement;
     let bodyInnerHeight: number;
+    let showFirstTimeSetup: boolean = false;
+
+    async function checkFirstTimeSetup() {
+        const firstTimeSetupDone = (await ReadInfo("FirstTimeTutorialShown")).Value;
+        if (firstTimeSetupDone != 1)
+            showFirstTimeSetup = true;
+    }
+
+    async function firstTimeSetupFinished(ev: { detail: any }) {
+        await UpdateSettings(ev.detail.settings);
+        UpdateInfo({"FirstTimeTutorialShown": "1"}).then(() => {
+            showFirstTimeSetup = false;
+        });
+    }
 
     onMount(() => {
         bodyContent.addEventListener("scroll", (ev) => {
@@ -21,6 +37,7 @@
         });
 
         const { intersectionObserver, mutationObserver } = createLazyIntersect();
+        checkFirstTimeSetup();
 
         return () => {
             mutationObserver.disconnect();
@@ -55,6 +72,7 @@
         <div class="w-fit h-full grid grid-flow-row">
             <SidePanel></SidePanel>
         </div>
+        <FirstTimeSetup isOpen={showFirstTimeSetup} on:finished={firstTimeSetupFinished} class="fixed top-0 left-0 w-screen h-screen z-50"></FirstTimeSetup>
         <Dialog class="z-50"></Dialog>
         <div
             bind:this={bodyContent}
@@ -67,6 +85,7 @@
             </div>
         </div>
         <VirtualScrollbar
+            class="fixed h-[95vh] top-[1vh] right-2 w-2"
             bodyInner={bodyInnerHeight}
             bodyHeight={bodyFullHeight}
             bodyScroll={scrollHeight}

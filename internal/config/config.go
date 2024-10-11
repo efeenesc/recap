@@ -9,6 +9,7 @@ import (
 )
 
 var Config AppConfig
+var Info AppInfo
 
 type AppConfig struct {
 	ScrPath                   string `json:"ScrPath"`
@@ -28,7 +29,17 @@ type AppConfig struct {
 	GeminiAPIKey              string `json:"GeminiAPIKey"`
 }
 
-func createFolderIfNotExists(path string) {
+type AppInfo struct {
+	Version                string `json:"Version"`
+	FirstTimeTutorialShown string `json:"FirstTimeTutorialShown"`
+}
+
+// CreateFolderIfNotExists checks if a folder exists at the given path, and if not, creates it with permissions set to 0700.
+// If the folder creation fails, it logs a fatal error and terminates the program.
+//
+// Parameters:
+//   - path: The file path where the folder should be checked and potentially created.
+func CreateFolderIfNotExists(path string) {
 	_, err := os.Stat(path)
 	if err != nil {
 		err = os.Mkdir(path, 0700)
@@ -36,8 +47,22 @@ func createFolderIfNotExists(path string) {
 	}
 }
 
+// Initialize attempts to load the configuration from predefined paths and
+// unmarshals it into the Config struct. It searches for the configuration
+// file in the following locations relative to the project root:
+// - ./configs/config.yaml
+// - ./config.yaml
+//
+// If the configuration file is found, it reads the file and unmarshals its
+// contents into the Config struct. Additionally, it ensures that the
+// directory specified by Config.ScrPath exists, creating it if necessary.
+//
+// If no configuration file is found, the function panics.
+//
+// NOTE: This function is currently unused as configurations are now stored
+// in the database instead of YAML files.
 func Initialize() {
-	proot, _ := GetProjectRoot()
+	proot := GetProjectRoot()
 
 	configPaths := []string{path.Join(proot, "./configs/config.yaml"), path.Join(proot, "./config.yaml")}
 	found := false
@@ -59,7 +84,7 @@ func Initialize() {
 			log.Fatalf("error: %v", err)
 		}
 
-		createFolderIfNotExists(path.Join(proot, Config.ScrPath))
+		CreateFolderIfNotExists(path.Join(proot, Config.ScrPath))
 		break
 	}
 
