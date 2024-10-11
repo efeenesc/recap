@@ -7,10 +7,16 @@ import (
 	"time"
 )
 
-/*
-Logs the daily report by first inserting a row into 'dailyreports', then getting the last inserted row
-and updating all rows in 'captures' which were used to generate the Daily Report.
-*/
+// Logs a daily report into the database and updates the associated captures with the report ID.
+//
+// Parameters:
+//   - db: A pointer to the sql.DB connection. If nil, a new connection will be created.
+//   - reportText: The content of the daily report.
+//   - caps: A slice of CaptureDescription containing the captures to be associated with the report.
+//   - genWithApi: A string indicating the API used to generate the report.
+//   - genWithModel: A string indicating the model used to generate the report.
+//
+// Note: The function uses dynamic SQL placeholders for the IN clause to update the captures.
 func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription, genWithApi string, genWithModel string) (*int64, error) {
 	if db == nil {
 		db, err := CreateConnection()
@@ -70,6 +76,11 @@ func LogDailyReport(db *sql.DB, reportText string, caps []CaptureDescription, ge
 	return &drId, nil
 }
 
+// Retrieves all reports from the database with a report_id greater than the specified id.
+// The results are ordered by timestamp in descending order.
+//
+// Parameters:
+//   - id: The report_id threshold
 func GetReportsNewerThan(id int) ([]Report, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -110,6 +121,12 @@ func GetReportsNewerThan(id int) ([]Report, error) {
 	return results, nil
 }
 
+// Retrieves a list of reports from the database that have a report_id less than the specified id.
+// The results are ordered by timestamp in descending order and limited to the specified number of reports.
+//
+// Parameters:
+//   - id: The report_id threshold
+//   - limit: The maximum number of reports to retrieve
 func GetReportsOlderThan(id int, limit int) ([]Report, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -151,6 +168,10 @@ func GetReportsOlderThan(id int, limit int) ([]Report, error) {
 	return results, nil
 }
 
+// Retrieves a list of reports from the database, limited by the specified number.
+//
+// Parameters:
+//   - limit: The maximum number of reports to retrieve
 func GetReports(limit int) ([]Report, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -185,11 +206,13 @@ func GetReports(limit int) ([]Report, error) {
 		results = append(results, r)
 	}
 
-	fmt.Println(len(results))
-
 	return results, nil
 }
 
+// GetReportById retrieves a report from the database by its ID.
+//
+// Parameters:
+//   - id: The ID of the report to retrieve
 func GetReportById(id int) (*Report, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -229,6 +252,10 @@ func GetReportById(id int) (*Report, error) {
 	return &rep, nil
 }
 
+// DeleteReportsById deletes reports from the database based on the provided list of report IDs.
+//
+// Parameters:
+//   - ids []int - A slice of report IDs to be deleted
 func DeleteReportsById(ids []int) error {
 	dbCl, err := CreateConnection()
 	if err != nil {

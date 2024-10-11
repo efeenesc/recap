@@ -101,10 +101,10 @@
                 </div>
             {:else}
                 <div class="flex flex-grow flex-col w-max">
-                    <span class="text-2xl">
+                    <span class="text-xl">
                         Your screenshots will appear here.
                     </span>
-                    <span class="text-2xl">
+                    <span class="text-xl">
                         Turn scheduled screenshots on to have the app get them
                         for you 📸
                     </span>

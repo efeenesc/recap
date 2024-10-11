@@ -320,7 +320,7 @@
                 primaryButtonName: "Delete",
                 primaryButtonCallback: async () => await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                secondaryButtonCallback: () => console.log("Cancelled")
+                // secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);
@@ -431,7 +431,7 @@
                                     {/if}
 
                                     <div
-                                        class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
+                                        class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
                                     >
                                         <div class="-mt-4">
                                             <MarkdownRenderer

@@ -120,7 +120,7 @@
         }
 
         if (oldestKnownId === undefined) {
-            console.log("No existing screenshots found");
+            // console.log("No existing screenshots found");
             return;
         }
 
@@ -367,7 +367,7 @@
                 primaryButtonCallback: async () =>
                     await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                secondaryButtonCallback: () => console.log("Cancelled"),
+                // secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);

@@ -12,7 +12,7 @@ export const processedScreenshotStore = derived<
     DatedScreenshot | undefined
 >(screenshotStore, ($scr) => {
     const screenshots: { [key: string]: ExtendedScreenshot[] } = {};
-    if (!$scr) return;
+    if (!$scr || !$scr.length) return;
     $scr.map((s: ExtendedScreenshot) => {
         s.Date = formatDate(s.Timestamp);
         if (!Object.hasOwn(screenshots, s.Date)) {

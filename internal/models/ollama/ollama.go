@@ -100,13 +100,15 @@ func (a *AIModel) DescribeBulkScreenshots(fileNames []string, prompt string) (st
 // and image data (if applicable). It returns the response from the API or an error.
 func sendToOllama(client *http.Client, modelName string, fileName *string, prompt string) (string, error) {
 	var images []string
-	if fileName != nil {
-		imageBase64 := utils.ReadImageToBase64(*fileName)
-		if imageBase64 == "" {
-			return "", fmt.Errorf("failed to read image file")
-		}
-		images = []string{imageBase64}
+	if fileName == nil {
+		return "", fmt.Errorf("No file name provided\n")
 	}
+
+	imageBase64 := utils.ReadImageToBase64(*fileName)
+	if imageBase64 == "" {
+		return "", fmt.Errorf("failed to read image file")
+	}
+	images = []string{imageBase64}
 
 	requestBody := OllamaRequest{
 		Model:  modelName,
