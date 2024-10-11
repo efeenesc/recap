@@ -1,4 +1,4 @@
-import type { MdNode } from "$lib/markdown/Parser.ts"
+import type { MdNode } from "$lib/markdown/Markdown.interface.ts"
 
 export interface BasicPageContent {
   Title?: string

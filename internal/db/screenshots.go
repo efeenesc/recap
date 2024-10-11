@@ -178,6 +178,11 @@ func GetUnprocessedCaptures(db *sql.DB) ([]CaptureScreenshot, error) {
 	return results, nil
 }
 
+// Retrieves screenshots with capture IDs greater than the specified ID.
+// It returns a slice of CaptureScreenshotImage and an error if any occurs during the process.
+//
+// Parameters:
+//   - id: An integer representing the capture ID to compare against
 func GetScreenshotsNewerThan(id int) ([]CaptureScreenshotImage, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
@@ -242,33 +247,39 @@ func GetScreenshotsNewerThan(id int) ([]CaptureScreenshotImage, error) {
 	return results, nil
 }
 
+// Retrieves screenshots with capture IDs less than the specified ID, limited by the specified number.
+// It returns a slice of CaptureScreenshotImage and an error if any occurs during the process.
+//
+// Parameters:
+//   - id: An integer representing the capture ID to compare against
+//   - limit: An integer representing the maximum number of results to return
 func GetScreenshotsOlderThan(id int, limit int) ([]CaptureScreenshotImage, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
-		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+		return nil, fmt.Errorf("could not create DB connection: %v", err)
 	}
 	defer dbCl.Close()
 
 	rows, err := dbCl.Query(`
-		SELECT 
-			c.capture_id,
-			c.timestamp, 
-			s.description,
-			s.filename,
-			s.thumbname,
-			s.gen_with_api,
-			s.gen_with_model,
-			c.r_id
-		FROM 
-			captures c
-		INNER JOIN 
-			screenshots s ON c.capture_id = s.capt_id
-		WHERE 
-			c.capture_id < (?)
-		ORDER BY 
-			c.timestamp DESC
-		LIMIT ?
-	`, id, limit)
+        SELECT 
+            c.capture_id,
+            c.timestamp, 
+            s.description,
+            s.filename,
+            s.thumbname,
+            s.gen_with_api,
+            s.gen_with_model,
+            c.r_id
+        FROM 
+            captures c
+        INNER JOIN 
+            screenshots s ON c.capture_id = s.capt_id
+        WHERE 
+            c.capture_id < (?)
+        ORDER BY 
+            c.timestamp DESC
+        LIMIT ?
+    `, id, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
@@ -279,23 +290,21 @@ func GetScreenshotsOlderThan(id int, limit int) ([]CaptureScreenshotImage, error
 
 	for rows.Next() {
 		var cs CaptureScreenshotImage
-		err := rows.Scan(
+		if err := rows.Scan(
 			&cs.CaptureID,
 			&cs.Timestamp,
 			&cs.Description,
-			&cs.Filename, // Make sure 'cs.Screenshot' matches the correct field name/type
+			&cs.Filename,
 			&cs.Thumbname,
 			&cs.GenWithApi,
 			&cs.GenWithModel,
 			&cs.ReportID,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 		results = append(results, cs)
 	}
 
-	// Check for errors after row iteration
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error during row iteration: %v", err)
 	}

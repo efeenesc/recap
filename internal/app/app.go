@@ -13,7 +13,6 @@ import (
 )
 
 var AppInstance App
-var appContext context.Context
 var WailsContext *context.Context
 
 type App struct {
@@ -39,6 +38,10 @@ type AppMethods struct {
 	CGetConfig                   func() (*config.AppConfig, error)
 	CGetDisplayValues            func() map[string]db.SettingDisplayProps
 	CUpdateSettings              func(map[string]string) error
+	CUpdateInfo                  func(map[string]string) error
+	CWriteInfo                   func(key, value string) error
+	CReadInfo                    func(key string) (*db.Info, error)
+	CReadAllInfo                 func() (map[string]string, error)
 }
 
 func NewApp() *App {
@@ -53,7 +56,6 @@ func NewAppMethods() *AppMethods {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	appContext = ctx
 }
 
 func (a *App) onDomReady(ctx context.Context) {

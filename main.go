@@ -1,11 +1,16 @@
 package main
 
 import (
+	_ "embed"
+	"log"
 	"recap/internal/db"
 	"recap/internal/llm"
 	"recap/internal/schedule"
 	"recap/internal/tray"
 )
+
+//go:embed assets/icon.ico
+var iconBytes []byte
 
 func addDbInitializers() *db.InitializerCallbacks {
 	initializers := db.NewInitializers()
@@ -17,9 +22,12 @@ func addDbInitializers() *db.InitializerCallbacks {
 
 func main() {
 	db.Initializers = *addDbInitializers()
-	db.Initialize(false)  // Initialize database, throw away the client afterwards
+	_, err := db.Initialize(false) // Initialize database, throw away the client afterwards
+	if err != nil {
+		log.Fatalf("Could not initialize database: %v\n", err.Error())
+	}
 	llm.Initialize()      // Setup LLM (text, vision) connectors from config
 	schedule.Initialize() // Start the schedule in which timers are configured for automatic screenshots and vision processing
-	tray.Initialize()
+	tray.Initialize(&iconBytes)
 	createApp()
 }

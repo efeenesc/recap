@@ -11,11 +11,6 @@
         };
     }
 
-    function parseMd(content: string) {
-        const parsed = ConvertToHtmlTree(content);
-        return parsed;
-    }
-
     /** @type {import('./$types').PageData} */
     export let data: Data;
 
@@ -72,16 +67,6 @@
                             <h3 class="flex-shrink-0 pl-2 py-1">
                                 Generated at {report.Time}
                             </h3>
-                            <!-- <div
-                                class="transition-box-content flex flex-col rounded-xl object-contain select-none pointer-events-none py-6 px-3"
-                            >
-                                <div>
-                                    <MarkdownRenderer parsedContent={parseMd(report.Content).content}></MarkdownRenderer>
-                                </div>
-                                <h3 class="flex-shrink-0 pl-2 py-1">
-                                    {report.Time}
-                                </h3>
-                            </div> -->
                         </div>
                     </div>
                     <div class="flex flex-col justify-end items-end gap-5 mt-4">

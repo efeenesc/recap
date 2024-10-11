@@ -55,8 +55,8 @@ func GetDisplayValues() map[string]SettingDisplayProps {
 		"ReportAutoEnabled":         {DisplayName: "Schedule", Description: "Enable or disable automatic daily report generation", Category: "Reports", InputType: "Boolean"},
 		"ReportAutoAt":              {DisplayName: "Time", Description: "Set the specific time each day when an automatic report should be generated", Category: "Reports", InputType: "TimePicker"},
 		"ReportPrompt":              {DisplayName: "Prompt", Description: "Customize the instructions given to the AI when generating reports from your screenshot descriptions", Category: "Reports", InputType: "ExtendedTextInput"},
-		"OllamaURL":                 {DisplayName: "Ollama URL", Description: "Enter the URL (including port) for your Ollama instance. The default is http://localhost:11434", Category: "Models", InputType: "URLInput"},
-		"GeminiAPIKey":              {DisplayName: "Gemini API key", Description: "Enter your Gemini API key. You can obtain a free API key from Google. For instructions, please refer to the 'Setting up' section in the tutorial", Category: "Models", InputType: "TextInput"},
+		"OllamaURL":                 {DisplayName: "Ollama URL", Description: "Enter the URL (including port) for your Ollama instance. The default is http://localhost:11434.", Category: "Models", InputType: "URLInput"},
+		"GeminiAPIKey":              {DisplayName: "Gemini API key", Description: "Enter your Gemini API key. You can obtain a free API key from Google.", Category: "Models", InputType: "TextInput"},
 	}
 
 	return settingKeyDisplayVals
@@ -160,21 +160,6 @@ func LoadConfig() (*config.AppConfig, error) {
 	return loadedConf, nil
 }
 
-// Checks the settings in the provided map to ensure they are valid according to specific criteria.
-// If a setting is found to be invalid, it updates that setting with the default value in the database.
-func validateSettings(settings map[string]Setting) {
-	dbCl, err := CreateConnection()
-	if err != nil {
-		fmt.Printf("Could not create DB connection: %v\n", err.Error())
-	}
-
-	for key, setting := range settings {
-		if !isValid(setting) {
-			updateSetting(dbCl, key, defaultSettings[key])
-		}
-	}
-}
-
 // Triggers re-initialization of specific app components (like scheduling or LLM) based on updated settings.
 // It checks which settings have changed and only reinitializes components if required by those changes.
 func RefreshInit(newSettings map[string]string) {
@@ -266,6 +251,10 @@ func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
 
 		if err == sql.ErrNoRows {
 			// Key doesn't exist, insert the default value
+			if key == "ScrPath" {
+				defaultValue = config.RelativeToAbsPath(defaultValue)
+				config.CreateFolderIfNotExists(defaultValue)
+			}
 			_, err = insertStmt.Exec(key, defaultValue)
 			if err != nil {
 				return fmt.Errorf("error inserting default value for key %s: %w", key, err)
@@ -283,23 +272,43 @@ func initializeSettings(db *sql.DB, defaultSettings map[string]string) error {
 	return nil
 }
 
+// Checks the settings in the provided map to ensure they are valid according to specific criteria.
+// If a setting is found to be invalid, it updates that setting with the default value in the database.
+//! There is currently no setting validation in place.
+// func validateSettings(settings map[string]Setting) {
+// 	dbCl, err := CreateConnection()
+// 	if err != nil {
+// 		fmt.Printf("Could not create DB connection: %v\n", err.Error())
+// 	}
+
+// 	for key, setting := range settings {
+// 		if !isValid(setting) {
+// 			err = updateSetting(dbCl, key, defaultSettings[key])
+// 			if err != nil {
+// 				fmt.Printf("Could not update setting: %v\n", err.Error())
+// 			}
+// 		}
+// 	}
+// }
+
 // Checks if a specific setting meets the defined validation criteria for that setting.
 // Returns true if the setting is valid, otherwise returns false.
-func isValid(setting Setting) bool {
-	switch setting.Key {
-	case "max_users":
-		// Assume max_users should be a positive integer
-		if _, err := strconv.Atoi(setting.Value); err != nil || setting.Value == "0" {
-			return false
-		}
-	case "enable_feature":
-		// Assume enable_feature should be "true" or "false"
-		if setting.Value != "true" && setting.Value != "false" {
-			return false
-		}
-	// Add more cases for other settings as needed
-	default:
-		return false // Unknown setting
-	}
-	return true
-}
+// ! There is currently no setting validation in place.
+// func isValid(setting Setting) bool {
+// 	switch setting.Key {
+// 	case "max_users":
+// 		// Assume max_users should be a positive integer
+// 		if _, err := strconv.Atoi(setting.Value); err != nil || setting.Value == "0" {
+// 			return false
+// 		}
+// 	case "enable_feature":
+// 		// Assume enable_feature should be "true" or "false"
+// 		if setting.Value != "true" && setting.Value != "false" {
+// 			return false
+// 		}
+// 	// Add more cases for other settings as needed
+// 	default:
+// 		return false // Unknown setting
+// 	}
+// 	return true
+// }

@@ -12,6 +12,9 @@ import (
 
 var Initializers InitializerCallbacks
 
+// A list of callbacks that are used to initialize parts of the application,
+// called directly during the database initialization process. This avoids
+// circular imports
 type InitializerCallbacks struct {
 	FunctionsGiven bool
 	InitSchedule   func()
@@ -22,9 +25,9 @@ func NewInitializers() *InitializerCallbacks {
 	return &InitializerCallbacks{}
 }
 
-func createTable(db *sql.DB) error {
+func createTable(db *sql.DB) {
 	capturesStmt := `
-	CREATE TABLE captures (
+	CREATE TABLE IF NOT EXISTS captures (
 		capture_id INTEGER NOT NULL PRIMARY KEY, 
 		r_id INTEGER, 
 		timestamp INTEGER NOT NULL
@@ -32,11 +35,11 @@ func createTable(db *sql.DB) error {
 	`
 	_, err := db.Exec(capturesStmt)
 	if err != nil {
-		log.Printf("%q: %s\n", err, capturesStmt)
+		log.Printf("Error executing query: %q: %s\n", err, capturesStmt)
 	}
 
 	screenshotsStmt := `
-	CREATE TABLE screenshots (
+	CREATE TABLE IF NOT EXISTS screenshots (
 		screenshot_id INTEGER NOT NULL PRIMARY KEY, 
 		capt_id INTEGER NOT NULL,
 		filename TEXT, 
@@ -47,65 +50,83 @@ func createTable(db *sql.DB) error {
 		FOREIGN KEY(capt_id) REFERENCES captures(capture_id)
 	);
 	`
-
 	_, err = db.Exec(screenshotsStmt)
 	if err != nil {
-		log.Printf("%q: %s\n", err, screenshotsStmt)
+		log.Printf("Error executing query: %q: %s\n", err, screenshotsStmt)
 	}
 
 	dailyReportsStmt := `
-	CREATE TABLE dailyreports (
+	CREATE TABLE IF NOT EXISTS dailyreports (
 		report_id INTEGER NOT NULL PRIMARY KEY,
 		timestamp INTEGER NOT NULL,
 		content TEXT,
 		gen_with_api TEXT,
-		gen_with_model TEXT,
+		gen_with_model TEXT
 	);
 	`
-
 	_, err = db.Exec(dailyReportsStmt)
 	if err != nil {
-		log.Printf("%q: %s\n", err, dailyReportsStmt)
+		log.Printf("Error executing query: %q: %s\n", err, dailyReportsStmt)
 	}
 
 	settingsStmt := `
-		CREATE TABLE settings (
-			key TEXT PRIMARY KEY UNIQUE NOT NULL,
-			value TEXT NOT NULL
+	CREATE TABLE IF NOT EXISTS settings (
+		key TEXT PRIMARY KEY UNIQUE NOT NULL,
+		value TEXT NOT NULL
 	);
 	`
-
 	_, err = db.Exec(settingsStmt)
 	if err != nil {
-		log.Printf("%q: %s\n", err, settingsStmt)
+		log.Printf("Error executing query: %q: %s\n", err, settingsStmt)
 	}
 
-	return nil
-}
-
-func CreateConnection() (*sql.DB, error) {
-	proot, _ := config.GetProjectRoot()
-	db, err := sql.Open("sqlite3", path.Join(proot, "recap.db"))
-
+	infoStmt := `
+	CREATE TABLE IF NOT EXISTS info (
+		key TEXT PRIMARY KEY UNIQUE NOT NULL,
+		value TEXT NOT NULL
+	);
+	`
+	_, err = db.Exec(infoStmt)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error executing query: %q: %s\n", err, infoStmt)
 	}
-
-	return db, nil
 }
 
+// Establishes a connection to the SQLite database located
+// at the project root directory and returns the database handle.
+//
+// Returns:
+//   - *sql.DB: A handle to the SQLite database
+//   - error: An error object if there was an issue opening the database
+func CreateConnection() (*sql.DB, error) {
+	proot := config.GetProjectRoot()
+	return sql.Open("sqlite3", path.Join(proot, "recap.db"))
+}
+
+// Sets up the database connection, creates necessary tables,
+// initializes settings with default values, and loads the configuration.
+// If keepConnectionOpen is true, the database connection remains open and
+// is returned; otherwise, the connection is closed before returning.
+//
+// Parameters:
+//   - keepConnectionOpen: Whether to keep the database
+//     connection open
 func Initialize(keepConnectionOpen bool) (*sql.DB, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
-		fmt.Printf("Error creating DB connection: %v\n", err.Error())
+		log.Fatalf("Error creating DB connection: %v\n", err.Error())
 	}
+
 	createTable(dbCl)
 
 	err = initializeSettings(dbCl, defaultSettings)
 	if err != nil {
-		fmt.Printf("Encountered the following error when trying to insert defaults: %v\n", err.Error())
-		dbCl.Close()
-		return nil, err
+		fmt.Printf("Error when inserting setting defaults: %v\n", err.Error())
+	}
+
+	err = InitializeInfo(dbCl)
+	if err != nil {
+		fmt.Printf("Error when inserting info defaults: %v\n", err.Error())
 	}
 
 	_, err = LoadConfig()

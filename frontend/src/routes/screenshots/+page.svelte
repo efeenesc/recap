@@ -27,7 +27,7 @@
     import type { Snapshot } from "@sveltejs/kit";
 
     interface Data {
-        data: DatedScreenshot;
+        data: DatedScreenshot | undefined;
     }
 
     export let data: Data;
@@ -120,7 +120,7 @@
         }
 
         if (oldestKnownId === undefined) {
-            console.log("No existing screenshots found");
+            // console.log("No existing screenshots found");
             return;
         }
 
@@ -141,13 +141,10 @@
             });
         } catch (error) {
             console.error("Error fetching older screenshots:", error);
+            allScreenshotsLoaded = true;
         }
     }
 
-    onDestroy(() => {
-        EventsOff("rcv:screenshotran");
-        loadMoreDivObserver.disconnect();
-    });
 
     onMount(() => {
         const unsubscribe = scrollStore.subscribe(
@@ -179,13 +176,15 @@
             unsubscribe();
             scrUnsubscribe();
             clearTimeout(loadMoreDivObserverTimeout);
+            EventsOff("rcv:screenshotran");
+            loadMoreDivObserver.disconnect();
         }; // Unsubscribe from scrollStore when destroying. Clear timeout for loadMoreDivObserverTimeout, so that the timeout doesn't run in another page
     });
 
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 2000);
+        }, 100);
     }
 
     function selectAllFromDate(event: any, date: string) {
@@ -368,7 +367,7 @@
                 primaryButtonCallback: async () =>
                     await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                secondaryButtonCallback: () => console.log("Cancelled"),
+                // secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);
@@ -436,7 +435,7 @@
             </div>
         </div>
 
-        {#if $rcvScr}
+        {#if $rcvScr !== undefined}
             {#each Object.entries($rcvScr) as [date, screenshots]}
                 <div>
                     <div
@@ -526,12 +525,12 @@
                 </div>
             {/each}
             {#if !allScreenshotsLoaded}
-                <div bind:this={loadMoreDiv}>Loading more screenshots...</div>
+                <div class="h-10 w-full" bind:this={loadMoreDiv}></div>
             {:else}
                 <div></div>
             {/if}
         {:else}
-            No screenshots available.
+            No screenshots available yet. Turn on the screenshot schedule to get started!
         {/if}
     </div>
 </div>

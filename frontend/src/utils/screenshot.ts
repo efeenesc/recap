@@ -4,8 +4,9 @@ import type { ExtendedScreenshot } from "../types/ExtendedScreenshot.interface.t
 import { db } from "$lib/wailsjs/go/models.ts";
 
 const processScreenshots = (
-    screenshots: db.CaptureScreenshotImage[]
+    screenshots: db.CaptureScreenshotImage[] | null
 ): ExtendedScreenshot[] => {
+    if (!screenshots) return [];
     const cast = screenshots.map<ExtendedScreenshot>(
         (v: any) => {
             v.Time = new Date(v.Timestamp * 1000).toLocaleTimeString();
@@ -30,7 +31,7 @@ export const getScreenshotById = async (id: number): Promise<ExtendedScreenshot>
 
 export const getScreenshotsOlderThan = async (id: number, limit: number) => {
     const res = await GetScreenshotsOlderThan(id, limit);
-    console.log(res);
+
     const processed = processScreenshots(res);
     return processed;
 }

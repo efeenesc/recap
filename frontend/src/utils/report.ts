@@ -29,7 +29,7 @@ export const getReportById = async (
 
 export const getReportsOlderThan = async (id: number, limit: number) => {
     const res = await GetReportsOlderThan(id, limit);
-    console.log(res);
+
     const processed = processReports(res);
     return processed;
 }

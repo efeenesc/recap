@@ -94,7 +94,7 @@
       <!-- svelte-ignore a11y-missing-attribute -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <a on:click={() => linkClicked(node.url)} target="_blank" class="flex">
+      <a title={node.url} on:click={() => linkClicked(node.url)} target="_blank">
         <svelte:self parsedContent={node.content}></svelte:self>
       </a>
     {/if}
@@ -110,6 +110,7 @@
   
   strong {
     font-weight: 400;
+    display: inline-block;
   }
 
   h2 {
@@ -138,6 +139,7 @@
     text-decoration: underline;
     text-decoration-color: white;
     cursor: pointer;
+    display: inline-block;
     margin: 0px;
     padding: 0px;
   }

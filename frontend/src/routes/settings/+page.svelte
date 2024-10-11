@@ -118,7 +118,8 @@
     }
 
     /**
-     * UpdateSettings takes a dictionary with string-only values. Converts number values to string, then returns the new string-only dictionary
+     * Converts number values to string, then returns the new string-only dictionary. Used before calling UpdateSettings,
+     * which takes a dictionary with string-only values
      */
     function convertChangedSettingsToStr() {
         const stringOnly: { [key: string]: string } = {};

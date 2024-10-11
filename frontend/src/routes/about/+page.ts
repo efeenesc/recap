@@ -8,7 +8,7 @@ import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts";
 export const load = async () => {
   const parsedPage: ExtendedPageContent[] = pageContent.map((c) => {
     const md = ConvertToHtmlTree(c.MarkdownContent).content as MdNode[];
-    console.log(md);
+
     return {
       ...c,
       ParsedMarkdown: md

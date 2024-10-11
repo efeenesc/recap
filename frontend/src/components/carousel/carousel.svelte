@@ -23,7 +23,7 @@
 
   function onWindowSizeChange() {
     carouselBounds = {
-      maxLeft: -(contentDiv.clientWidth * 0.85),
+      maxLeft: -(contentDiv.clientWidth * 0.80),
       maxRight: 0
     }
   }
@@ -146,7 +146,7 @@
   on:mousedown={startDragging}
   on:touchstart={startDragging}
 >
-  <div bind:this={contentDiv} class="flex pr-24 cursor-grab active:cursor-grabbing">
+  <div bind:this={contentDiv} class="flex cursor-grab active:cursor-grabbing">
     <slot {onLoad}></slot>
   </div>
 </div>

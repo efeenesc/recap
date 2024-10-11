@@ -40,8 +40,6 @@ export const load = async () => {
         delete result["Reports"]["ReportAutoEnabled"]
         delete result["Reports"]["ReportAutoAt"]
 
-        console.log(result);
-
         // Handle cases where result is not found
         if (!result) {
           reject(0);

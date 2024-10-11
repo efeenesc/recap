@@ -236,7 +236,59 @@ func (a *AppMethods) UpdateSettings(newSettings map[string]string) error {
 		}
 
 		return nil
-	} else {
-		return fmt.Errorf("Missing function when calling UpdateSettings\n")
 	}
+
+	return fmt.Errorf("Missing function when calling UpdateSettings\n")
+}
+
+func (a *AppMethods) UpdateInfo(newInfo map[string]string) error {
+	if a.FunctionsGiven {
+		err := a.CUpdateInfo(newInfo)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Missing function when calling UpdateInfo\n")
+}
+
+func (a *AppMethods) WriteInfo(key, value string) error {
+	if a.FunctionsGiven {
+		err := a.CWriteInfo(key, value)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Missing function when calling WriteInfo\n")
+}
+
+func (a *AppMethods) ReadInfo(key string) (*db.Info, error) {
+	if a.FunctionsGiven {
+		val, err := a.CReadInfo(key)
+		if err != nil {
+			return nil, err
+		}
+
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("Missing function when calling WriteInfo\n")
+}
+
+func (a *AppMethods) ReadAllInfo() (map[string]string, error) {
+	if a.FunctionsGiven {
+		val, err := a.CReadAllInfo()
+		if err != nil {
+			return nil, err
+		}
+
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("Missing function when calling WriteInfo\n")
 }

@@ -84,6 +84,9 @@ func TakeScreenshot() (string, string) {
 	}
 
 	err = saveScreenshotJPEG(img, thumbFilename, 40)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return fullFilename, thumbFilename
 }

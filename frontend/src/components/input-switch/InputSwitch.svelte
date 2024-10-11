@@ -17,7 +17,6 @@
     const dispatch = createEventDispatcher();
 
     function handleChange(event: any) {
-        console.log(event);
         let returnValue;
 
         // Check if the event is a string
@@ -48,15 +47,19 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 {#if inputType === "FolderPicker"}
-    <div class="flex items-center justify-center gap-4 my-4">
+    <div
+        class="flex items-center justify-center gap-2 my-4 h-12 overflow-hidden"
+    >
         <button
             on:click={pickFolder}
-            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            class="flex-shrink-0 h-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
             Select folder
         </button>
-        <div class="flex-grow bg-gray-200 rounded-lg p-3 shadow-inner">
-            <p class="text-gray-900 truncate">{inputValue}</p>
+        <div
+            class="folder-name bg-gray-200 h-12 overflow-hidden rounded-lg p-3 shadow-inner overflow-x-scroll"
+        >
+            <span class="text-gray-900 text-nowrap">{inputValue}</span>
         </div>
     </div>
 {:else if inputType === "ExtendedTextInput"}
@@ -131,7 +134,7 @@
     <input
         {id}
         type="text"
-        class="w-full max-w-4xl p-3 bg-gray-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y {_class}"
+        class="w-full max-w-4xl p-3 focus:bg-white bg-gray-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y {_class}"
         on:change={handleChange}
         value={inputValue}
     />
@@ -143,4 +146,26 @@
     @tailwind base;
     @tailwind components;
     @tailwind utilities;
+
+    .folder-name::-webkit-scrollbar {
+        background-color: rgba(0,0,0,0);
+        width: 16px;
+        height: 10px;
+        overflow: hidden;
+    }
+
+    /* background of the scrollbar except button or resizer */
+    .folder-name::-webkit-scrollbar-track {
+        background-color: rgba(0,0,0,0);
+        overflow: hidden;
+    }
+
+    /* scrollbar itself */
+    .folder-name::-webkit-scrollbar-thumb {
+        background-color:#babac0;
+        border-radius:9999px;
+    }
+
+    /* set button(top and bottom of the scrollbar) */
+    .folder-name::-webkit-scrollbar-button {display:none}
 </style>

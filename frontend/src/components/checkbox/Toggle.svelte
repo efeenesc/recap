@@ -8,7 +8,6 @@
     const dispatch = createEventDispatcher();
 
     function handleChange(event: any) {
-        console.log(event);
         dispatch("checked", { checked: event.target.checked });
     }
 </script>

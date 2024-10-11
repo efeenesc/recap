@@ -5,6 +5,10 @@
     export let bodyInner: number;
     export let bodyHeight: number;
     export let bodyScroll: number;
+    export let _class: string | undefined;
+    export let style: string | undefined = undefined;
+
+    export { _class as class };
 
     let thisHeight: number;
     let scrollbarHeight: number;
@@ -78,7 +82,8 @@
     bind:clientHeight={thisHeight}
     on:mouseenter={() => showScrollbar(false)}
     on:mouseleave={startHideTimeout}
-    class="fixed h-[95vh] top-[1vh] right-2 w-2 block"
+    class="{_class} block"
+    style={style ? style : ''}
 >
     <div
         bind:clientHeight={scrollbarHeight}
