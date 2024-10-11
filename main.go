@@ -1,12 +1,16 @@
 package main
 
 import (
+	_ "embed"
 	"log"
 	"recap/internal/db"
 	"recap/internal/llm"
 	"recap/internal/schedule"
 	"recap/internal/tray"
 )
+
+//go:embed assets/icon.ico
+var iconBytes []byte
 
 func addDbInitializers() *db.InitializerCallbacks {
 	initializers := db.NewInitializers()
@@ -24,6 +28,6 @@ func main() {
 	}
 	llm.Initialize()      // Setup LLM (text, vision) connectors from config
 	schedule.Initialize() // Start the schedule in which timers are configured for automatic screenshots and vision processing
-	tray.Initialize()
+	tray.Initialize(&iconBytes)
 	createApp()
 }

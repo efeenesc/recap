@@ -2,7 +2,6 @@ package tray
 
 import (
 	"fmt"
-	"os"
 	"recap/internal/app"
 	"recap/internal/config"
 	"recap/internal/llm"
@@ -12,21 +11,17 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+var iconBytes *[]byte
 var ScrTrayBtn *systray.MenuItem
 var LLMTrayBtn *systray.MenuItem
 
-func getIcon() ([]byte, error) {
-	return os.ReadFile("icon.ico")
-}
-
+// Callback for when the systray is ready. It sets up the systray's title, tooltip, icon, menu items
+// and a separator
 func onReady() {
 	systray.SetTitle("Recap")
 	systray.SetTooltip("Open Recap")
 
-	bytes, err := getIcon()
-	if err == nil {
-		systray.SetIcon(bytes)
-	}
+	systray.SetIcon(*iconBytes)
 
 	scrScheduleEnabled := config.Config.ScreenshotIntervalEnabled == 1
 	llmScheduleEnabled := config.Config.DescGenIntervalEnabled == 1
@@ -77,6 +72,11 @@ func onExit() {
 	fmt.Println("Exiting program")
 }
 
-func Initialize() {
+// Initialize sets up the systray with the given icon and registers two callback functions.
+// The first callback, onReady, is called when the systray is ready and sets up the systray's title, tooltip, and icon,
+// and adds three menu items and a separator. The second callback, onExit, is called when the application exits and does
+// nothing.
+func Initialize(iconptr *[]byte) {
+	iconBytes = iconptr
 	systray.Register(onReady, onExit)
 }
