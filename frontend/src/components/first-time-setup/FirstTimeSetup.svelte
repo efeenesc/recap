@@ -214,10 +214,7 @@
                                                     inputValue={$settings[cat][
                                                         set
                                                     ].Value}
-                                                    inputOptions={[
-                                                        "ollama",
-                                                        "gemini",
-                                                    ]}
+                                                    inputOptions={$settings[cat][set].Options}
                                                     on:changed={(e) =>
                                                         changedEvent(
                                                             e,

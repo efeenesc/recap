@@ -5,6 +5,7 @@ export interface ExtendedSettingDisplayProps {
   Description: string
   Category: string
   InputType: SettingInputType
+  Options: string[] | null
 }
 
 export interface BasicSetting {

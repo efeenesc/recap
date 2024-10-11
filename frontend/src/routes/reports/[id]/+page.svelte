@@ -56,7 +56,7 @@
                                 class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-800 opacity-0 hidden"
                             ></div>
                             <div
-                                class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
+                                class="flex flex-col flex-shrink overflow-hidden p-2 bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
                             >
                                 <div class="-mt-4">
                                     <MarkdownRenderer

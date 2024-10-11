@@ -5,6 +5,7 @@ import (
 	"log"
 	"recap/internal/db"
 	"recap/internal/llm"
+	_ "recap/internal/models/all" // Loads all models just to run their init()
 	"recap/internal/schedule"
 	"recap/internal/tray"
 )

@@ -262,7 +262,7 @@
                                             inputType={$newSet[cat][set]
                                                 .InputType}
                                             inputValue={$newSet[cat][set].Value}
-                                            inputOptions={["ollama", "gemini"]}
+                                            inputOptions={$newSet[cat][set].Options}
                                             on:changed={(e) =>
                                                 changedEvent(e, cat, set)}
                                         ></InputSwitch>

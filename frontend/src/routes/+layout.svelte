@@ -69,7 +69,7 @@
         <div class="w-[40px] h-[30px] flex items-center justify-center">-</div>
     </div> -->
     <div class="h-full w-full flex flex-row overflow-hidden pt-2 relative">
-        <div class="w-fit h-full grid grid-flow-row">
+        <div class="exclude-sidepanel w-fit h-full grid grid-flow-row">
             <SidePanel></SidePanel>
         </div>
         <FirstTimeSetup isOpen={showFirstTimeSetup} on:finished={firstTimeSetupFinished} class="fixed top-0 left-0 w-screen h-screen z-50"></FirstTimeSetup>

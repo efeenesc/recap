@@ -1,6 +1,6 @@
-package ollama
+package openai
 
-type OllamaRequest struct {
+type OpenAIRequest struct {
 	Model   string    `json:"model"`
 	Prompt  string    `json:"prompt"`
 	Stream  bool      `json:"stream"`
@@ -9,13 +9,13 @@ type OllamaRequest struct {
 }
 
 type Options struct {
-	Temperature float32 `json:""`
+	Temperature float32 `json:"temperature"`
 }
 
-type OllamaFullResponse struct {
+type OpenAIFullResponse struct {
 	Model              string `json:"model"`
 	CreatedAt          string `json:"created_at"`
-	Response           string `json:"response"` // Date field. Parse if needed
+	Response           string `json:"response"`
 	Done               bool   `json:"done"`
 	Context            []int  `json:"context"`
 	TotalDuration      int64  `json:"total_duration"`

@@ -6,7 +6,7 @@
 
     export let inputType: SettingInputType;
     export let inputValue: string | number;
-    export let inputOptions: string[];
+    export let inputOptions: string[] | null;
     export let checked: boolean = false;
     export let id: string;
     let _class: string;
@@ -102,17 +102,19 @@
     />
 {:else if inputType === "APIPicker"}
     <div class="flex w-fit my-4 p-1 gap-2 bg-gray-200 rounded-lg shadow-inner">
-        {#each inputOptions as option}
-            <button
-                on:click={() => handleChange(option)}
-                class="py-2 px-4 rounded-md transition-all capitalize {inputValue ===
-                option
-                    ? 'bg-white text-blue-600 font-bold shadow'
-                    : 'text-gray-600 hover:bg-gray-300'}"
-            >
-                {option}
-            </button>
-        {/each}
+        {#if inputOptions}
+            {#each inputOptions as option}
+                <button
+                    on:click={() => handleChange(option)}
+                    class="py-2 px-4 rounded-md transition-all capitalize {inputValue ===
+                    option
+                        ? 'bg-white text-blue-600 font-bold shadow'
+                        : 'text-gray-600 hover:bg-gray-300'}"
+                >
+                    {option}
+                </button>
+            {/each}
+        {/if}
     </div>
 {:else if inputType === "APIModelPicker"}
     <input

@@ -1,6 +1,12 @@
 package models
 
-type ITextVisionModel interface {
+type TextVisionAPI interface {
+	// Get this API's name
+	GetAPIName() string
+
+	// Get this API's model name
+	GetAPIModelName() string
+
 	// Generate text with a text prompt. Returns the response, or an error if one is received
 	GenerateText(prompt string) (string, error)
 

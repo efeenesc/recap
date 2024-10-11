@@ -7,13 +7,11 @@ import (
 	"recap/internal/config"
 	"recap/internal/db"
 	"recap/internal/models"
-	"recap/internal/models/gemini"
-	"recap/internal/models/ollama"
 	"time"
 )
 
-var visionModel models.ITextVisionModel
-var textModel models.ITextVisionModel
+var visionAPI models.TextVisionAPI
+var textAPI models.TextVisionAPI
 
 // Processes descriptions from screenshots into formatted context to be passed to the LLM
 func preprocessContext(caps []db.CaptureDescription) string {
@@ -54,7 +52,7 @@ func GenerateDailyReport() (*int64, error) {
 
 	finalPrompt := preprocessContext(todayCaps)
 
-	res, err := textModel.GenerateText(finalPrompt)
+	res, err := textAPI.GenerateText(finalPrompt)
 	if err != nil {
 		log.Fatalln(err.Error())
 		// return nil, err
@@ -106,7 +104,7 @@ func GenerateReportWithSelectScr(ids []int) (*int64, error) {
 
 	finalPrompt := preprocessContext(descs)
 
-	res, err := textModel.GenerateText(finalPrompt)
+	res, err := textAPI.GenerateText(finalPrompt)
 	if err != nil {
 		return nil, fmt.Errorf("error generating text: %w", err)
 	}
@@ -148,7 +146,7 @@ func SendQueueFromObject(dbCl *sql.DB, scrs []db.CaptureScreenshot) ([]db.Captur
 				continue
 			}
 
-			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
+			res, err := visionAPI.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
 			if err != nil {
 				log.Printf("Error processing file %s: %v", cap.Filename, err)
 				continue
@@ -221,7 +219,7 @@ func SendQueue() {
 		processingQueue := fullQueue[i:end]
 
 		for _, cap := range processingQueue {
-			res, err := visionModel.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
+			res, err := visionAPI.DescribeScreenshot(cap.Filename, config.Config.DescGenPrompt)
 			if err != nil {
 				fmt.Printf("Error processing file %s: %v\n", cap.Filename, err)
 				continue
@@ -247,37 +245,39 @@ func SendQueue() {
 // Sets up the vision and text models based on configuration settings.
 // It selects the appropriate API clients for image description and report generation.
 func Initialize() {
-	visionAPI := config.Config.DescGenAPI
-	visionModelName := config.Config.DescGenModel
+	selectedVisionAPI := config.Config.DescGenAPI
+	selectedVisionModelName := config.Config.DescGenModel
 
-	textAPI := config.Config.ReportAPI
-	textModelName := config.Config.ReportModel
+	selectedTextAPI := config.Config.ReportAPI
+	selectedTextModelName := config.Config.ReportModel
 
-	switch visionAPI {
-	case "gemini":
-		visionModel = gemini.CreateAPIClient(visionModelName)
+	visionAPIFactory, err := models.GetAPI(selectedVisionAPI)
+	if err != nil {
+		fmt.Printf("COULD NOT FIND MODEL: %s\nSwitching to Ollama API as a fallback\n", selectedVisionAPI)
 
-	case "ollama":
-		visionModel = ollama.CreateAPIClient(visionModelName)
-
-	default:
-		log.Fatalf("Unsupported screenshot/vision API: %s\n", visionAPI)
-	}
-
-	if visionModelName == textModelName {
-		textModel = visionModel
-	} else {
-		switch textAPI {
-		case "gemini":
-			textModel = gemini.CreateAPIClient(textModelName)
-
-		case "ollama":
-			textModel = ollama.CreateAPIClient(textModelName)
-
-		default:
-			log.Fatalf("Unsupported report/text API: %s\n", textAPI)
+		visionAPIFactory, err = models.GetAPI("ollama")
+		if err != nil {
+			log.Fatalf("Could not switch to Ollama fallback!")
 		}
 	}
 
-	fmt.Printf("Using %s %s for vision and %s %s for text\n", visionAPI, visionModelName, textAPI, textModelName)
+	visionAPI = visionAPIFactory(selectedVisionModelName)
+
+	if selectedVisionModelName == selectedTextModelName {
+		textAPI = visionAPI
+	} else {
+		textModelFactory, err := models.GetAPI(selectedTextAPI)
+		if err != nil {
+			fmt.Printf("COULD NOT FIND MODEL: %s\nSwitching to Ollama API as a fallback\n", selectedTextAPI)
+
+			textModelFactory, err = models.GetAPI("ollama")
+			if err != nil {
+				log.Fatalf("Could not switch to Ollama fallback!")
+			}
+		}
+
+		textAPI = textModelFactory(selectedTextModelName)
+	}
+
+	fmt.Printf("Using %s %s for vision and %s %s for text\n", selectedVisionAPI, selectedVisionModelName, selectedTextAPI, selectedTextModelName)
 }

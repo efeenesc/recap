@@ -11,18 +11,6 @@ body {
     margin: 0;
 }
 
-:root::view-transition-old(*),
-:root::view-transition-new(*) {
-    position: absolute;
-    inset-block-start: 0;
-    inline-size: 100%;
-    block-size: auto;
-
-    animation-duration: inherit;
-    animation-fill-mode: inherit;
-    animation-delay: inherit;
-}
-
 /* Keyframes for blending when there are 2 images */
 @keyframes -ua-mix-blend-mode-plus-lighter {
     from {
@@ -50,6 +38,12 @@ body {
     animation: none;
 }
 
+::view-transition-group(exclude-sidepanel),
+::view-transition-old(exclude-sidepanel),
+::view-transition-new(exclude-sidepanel) {
+    animation-duration: 0s !important;
+}
+
 ::view-transition-old(page-title)
 ::view-transition-new(page-title)
 ::view-transition-old(transition-box-container)
@@ -57,6 +51,10 @@ body {
 ::view-transition-old(transition-box-content)
 ::view-transition-new(transition-box-content) {
     animation: -ua-mix-blend-mode-plus-lighter;
+}
+
+.exclude-sidepanel {
+    view-transition-name: exclude-sidepanel;
 }
 
 .exclude-transition {
