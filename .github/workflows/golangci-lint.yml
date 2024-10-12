@@ -4,7 +4,8 @@ on:
     branches:
       - main
       - master
-  pull_request:
+      - golangci-fix
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,9 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
           go-version: stable
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6.1.1
         with:

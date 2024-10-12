@@ -4,8 +4,9 @@ usr
 /screenshots
 build/bin
 node_modules
-frontend/build
 *.d.ts
 frontend/src/lib/wailsjs
-build
+frontend/build/*
+!frontend/build/.gitkeep
+build/*
 recap.db
