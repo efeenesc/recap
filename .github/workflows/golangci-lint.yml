@@ -4,20 +4,52 @@ on:
     branches:
       - main
       - master
-  pull_request:
-
+  workflow_dispatch:
+  
 permissions:
   contents: read
-
+  
 jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
           go-version: stable
+
+      - name: Go Module Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Apt Cache
+        uses: actions/cache@v3
+        id: apt-cache
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/apt-packages.txt') }}
+
+      - name: Install dependencies
+        if: steps.apt-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev
+          mkdir -p ~/apt-cache
+          sudo cp -R /var/cache/apt/archives/*.deb ~/apt-cache
+
+      - name: Restore Apt Cache
+        if: steps.apt-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo cp -R ~/apt-cache/*.deb /var/cache/apt/archives/
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6.1.1
         with:
