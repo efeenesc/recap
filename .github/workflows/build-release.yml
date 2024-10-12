@@ -1,0 +1,76 @@
+name: Build and release
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - master
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  create-release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  build:
+    needs: create-release
+    if: github.ref == 'refs/heads/master'  # Only run on master branch
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Set build variables
+        id: build_vars
+        run: |
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            echo "::set-output name=platform::linux/amd64"
+            echo "::set-output name=asset_name::Recap-linux-amd64"
+          elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+            echo "::set-output name=platform::windows/amd64"
+            echo "::set-output name=asset_name::Recap-windows-amd64.exe"
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+            echo "::set-output name=platform::darwin/universal"
+            echo "::set-output name=asset_name::Recap-darwin-universal"
+          fi
+        shell: bash
+
+      - name: Build wails
+        uses: dAppServer/wails-build-action@v2.2
+        id: build
+        with:
+          build-name: 'Recap'
+          build-platform: ${{ steps.build_vars.outputs.platform }}
+          package: true
+          go-version: '1.20'
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ steps.build.outputs.build-path }}
+          asset_name: ${{ steps.build_vars.outputs.asset_name }}
+          asset_content_type: application/octet-stream
