@@ -6,5 +6,7 @@ build/bin
 node_modules
 *.d.ts
 frontend/src/lib/wailsjs
+frontend/build/*
+!frontend/build/.gitkeep
 build/*
 recap.db
