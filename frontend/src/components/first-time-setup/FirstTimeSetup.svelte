@@ -153,7 +153,7 @@
             on:scroll={onScroll}
             bind:clientHeight={bodyClientHeight}
             bind:this={bodyContent}
-            transition:scale={{start: 0.9, opacity: 0, easing: expoOut, duration: 1000 }}
+            transition:scale={{start: 0.9, opacity: 0, easing: expoOut, duration: 500 }}
             class="bg-white text-black w-[80%] h-[80%] rounded-xl p-6 overflow-y-scroll relative flex"
         >
             <div id="content" class="h-max w-full">
