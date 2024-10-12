@@ -16,7 +16,7 @@
     "productVersion": "0.0.1",
     "comments": "Get a Recap of your daily activity. Built using Go and Wails."
   },
-  "preBuildHooks": {
+  "postBuildHooks": {
     "windows/*": "cmd.exe /c echo. > ..\/..\/frontend\/build\/.gitkeep"
   }
 }
