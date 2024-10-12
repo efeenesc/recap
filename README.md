@@ -58,7 +58,7 @@ Use `wails build`.
 
 ## Technical Description
 
-This project was built using Go and the Wails GUI framework. SvelteKit, TypeScript are used for the frontend. Support for other APIs may be added by creating a struct that implements the VisionTextModel interface inside a new file called `internal/models/{modelname}/{modelname}.go`. Change the Initialize function inside `internal/llm/llm.go` to support the new API.
+This project was built using Go and the Wails GUI framework. SvelteKit, TypeScript are used for the frontend. Support for other APIs may be added by creating a struct that implements the TextVisionAPI interface inside a new file called `internal/models/{modelname}/{modelname}.go`. Change the Initialize function inside `internal/llm/llm.go` to support the new API.
 
 User settings are stored in the SQLite database. Defaults for user settings, what user settings are allowed, and more, are defined inside `internal/db/settings.go`.
 
