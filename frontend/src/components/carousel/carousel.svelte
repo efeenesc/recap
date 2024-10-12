@@ -22,8 +22,9 @@
   let prevMousePos: MousePosition | null = { x: 0, time: 0 };
 
   function onWindowSizeChange() {
+    if (!contentDiv) return;
     carouselBounds = {
-      maxLeft: -(contentDiv.clientWidth * 0.80),
+      maxLeft: -(contentDiv.clientWidth * 0.85),
       maxRight: 0
     }
   }
@@ -56,11 +57,6 @@
 
     dragStartPos = getDragPosition(e, carouselRect.left);
     setPrevMousePosition(dragStartPos, e.timeStamp);
-
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', stopDragging);
-    window.addEventListener('touchmove', drag);
-    window.addEventListener('touchend', stopDragging);
   }
 
   function drag(e: MouseEvent | TouchEvent): void {
@@ -81,11 +77,6 @@
     isDragging = false;
 
     if (!prevMousePos || !currentMousePos) return;
-
-    window.removeEventListener('mousemove', drag);
-    window.removeEventListener('mouseup', stopDragging);
-    window.removeEventListener('touchmove', drag);
-    window.removeEventListener('touchend', stopDragging);
   
     const { x: curX, time: curTime } = currentMousePos;
     const { x: prevX, time: prevTime } = prevMousePos;
@@ -104,16 +95,28 @@
 
   onMount(() => {
     carouselRect = carousel.getBoundingClientRect();
-    onWindowSizeChange();
     window.addEventListener('resize', onWindowSizeChange);
-  });
 
-  onDestroy(() => {
-    window.removeEventListener('resize', onWindowSizeChange);
-    window.removeEventListener('mousemove', drag);
-    window.removeEventListener('mouseup', stopDragging);
-    window.removeEventListener('touchmove', drag);
-    window.removeEventListener('touchend', stopDragging);
+    // Create a ResizeObserver to watch for changes in the content div
+    const resizeObserver = new ResizeObserver(() => {
+      onWindowSizeChange();
+    });
+
+    // Observe the content div
+    resizeObserver.observe(contentDiv);
+
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', stopDragging);
+    window.addEventListener('touchmove', drag);
+    window.addEventListener('touchend', stopDragging);
+
+    return () => {
+      window.removeEventListener('resize', onWindowSizeChange);
+      window.removeEventListener('mousemove', drag);
+      window.removeEventListener('mouseup', stopDragging);
+      window.removeEventListener('touchmove', drag);
+      window.removeEventListener('touchend', stopDragging);
+    }
   });
 
   function onLoad() {
