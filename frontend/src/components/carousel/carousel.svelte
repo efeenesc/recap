@@ -111,6 +111,7 @@
     window.addEventListener('touchend', stopDragging);
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', onWindowSizeChange);
       window.removeEventListener('mousemove', drag);
       window.removeEventListener('mouseup', stopDragging);
