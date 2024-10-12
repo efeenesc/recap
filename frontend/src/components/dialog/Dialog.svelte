@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fade, scale } from 'svelte/transition';
+    import { expoOut } from 'svelte/easing';
     import { dialogStore, type DialogData } from "$lib/stores/DialogStore.ts";
     import { onDestroy, onMount } from "svelte";
     import type { Unsubscriber } from "svelte/store";
@@ -74,11 +76,13 @@
 >
     {#if currentDialog}
         <div
+            transition:fade={{ duration: 200 }}
             on:click={closeDialog}
             class="absolute w-full h-full z-40 bg-black opacity-60"
             role="presentation"
         ></div>
         <div
+            transition:scale={{start: 0.9, opacity: 0, easing: expoOut, duration: 500 }}
             class="flex flex-col z-50 rounded-xl bg-white text-black min-w-[40%] max-w-[70%] p-6"
         >
             <h1 class="text-2xl lg:text-3xl font-extrabold mb-4">

@@ -34,12 +34,12 @@
         >
             <div
                 on:click={goBack}
-                class="aspect-square flex-shrink h-8 cursor-pointer"
+                class="aspect-square flex-shrink h-8 cursor-pointer fill-neutral-800 dark:fill-white"
             >
-                <BackArrow strokeColor="#fff"></BackArrow>
+                <BackArrow></BackArrow>
             </div>
             <h1
-                class="page-title text-2xl -tracking-wide opacity-85 left-0 top-0 w-1/2 z-20"
+                class="page-title text-2xl -tracking-wide left-0 top-0 w-1/2 z-20"
             >
                 Reports
             </h1>
@@ -50,13 +50,13 @@
                     <div class="pb-2 gap-5 flex flex-col pt-2">
                         <div
                             id="r{report.ReportID}"
-                            class="transition-box-container max-h-max relative rounded-lg w-fit justify-center items-center bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 shadow-2xl"
+                            class="transition-box-container max-h-max relative rounded-lg w-fit justify-center items-center bg-neutral-100 dark:bg-neutral-800 outline-neutral-300 dark:outline-neutral-900 outline overflow-hidden outline-1 p-1 shadow-2xl"
                         >
                             <div
                                 class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-800 opacity-0 hidden"
                             ></div>
                             <div
-                                class="flex flex-col flex-shrink overflow-hidden p-2 bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
+                                class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-200 dark:bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
                             >
                                 <div class="-mt-4">
                                     <MarkdownRenderer

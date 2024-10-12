@@ -1,23 +1,27 @@
 <script lang="ts">
-	import type { DatedReport } from './../../types/ExtendedReport.interface.ts';
-	import { reportStore } from '$lib/stores/ReportStore.ts';
+    import type { DatedReport } from "./../../types/ExtendedReport.interface.ts";
+    import { reportStore } from "$lib/stores/ReportStore.ts";
     import gsap from "gsap";
     import { get, writable } from "svelte/store";
     import { EventsOff, EventsOn } from "$lib/wailsjs/runtime/runtime.js";
-    import { addReportToStore, getReportsNewerThan, getReportsOlderThan } from "../../utils/report.ts";
+    import {
+        addReportToStore,
+        getReportsNewerThan,
+        getReportsOlderThan,
+    } from "../../utils/report.ts";
     import { onDestroy, onMount } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
     import Checkmark from "../../icons/Checkmark.svelte";
     import { addNewDialog } from "../../utils/dialog.ts";
     import MarkdownRenderer from "../../components/markdown-renderer/MarkdownRenderer.svelte";
-    import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts"
+    import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts";
     import { scrollStore } from "$lib/stores/ScrollStore.ts";
-    import { DeleteReportsById } from "$lib/wailsjs/go/app/AppMethods.js"
-    import type { Snapshot } from '@sveltejs/kit';
+    import { DeleteReportsById } from "$lib/wailsjs/go/app/AppMethods.js";
+    import type { Snapshot } from "@sveltejs/kit";
 
     interface Data {
-        data: DatedReport | undefined
+        data: DatedReport | undefined;
     }
 
     export let data: Data;
@@ -28,10 +32,10 @@
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
     let loadMoreDivObserverTimeout: number | undefined;
-    
+
     let scrollTop: number = 0;
 
-    // Variable assigned to during snapshot.recover. If assigned, scroll this element to previous Y position. 
+    // Variable assigned to during snapshot.recover. If assigned, scroll this element to previous Y position.
     let scrollTopSnapshot: number | undefined;
     let titleBackgroundOpacity: boolean = false;
 
@@ -48,16 +52,16 @@
 
     $: {
         if (scrollTopSnapshot) {
-            const scroller = document.getElementsByClassName('scroller')[0];
+            const scroller = document.getElementsByClassName("scroller")[0];
             setTimeout(() => {
-                scroller.scroll(0, scrollTopSnapshot!)
-            }, 0)
+                scroller.scroll(0, scrollTopSnapshot!);
+            }, 0);
         }
     }
 
     export const snapshot: Snapshot<number> = {
         capture: () => {
-            return scrollTop
+            return scrollTop;
         },
         restore: (snapshot) => {
             scrollTopSnapshot = snapshot;
@@ -65,15 +69,19 @@
     };
 
     function animateLoad(id: string) {
-        gsap.fromTo('#' + id, {
-            opacity: 0,
-            scale: 0.9
-        }, {
-            opacity: 1,
-            scale: 1,
-            duration: 1,
-            ease: "expo.out",
-        });
+        gsap.fromTo(
+            "#" + id,
+            {
+                opacity: 0,
+                scale: 0.9,
+            },
+            {
+                opacity: 1,
+                scale: 1,
+                duration: 1,
+                ease: "expo.out",
+            }
+        );
     }
 
     async function addNewReports() {
@@ -124,10 +132,7 @@
         }
 
         try {
-            const newReports = await getReportsOlderThan(
-                oldestKnownId,
-                30
-            );
+            const newReports = await getReportsOlderThan(oldestKnownId, 30);
 
             if (newReports === null || newReports.length === 0) {
                 return;
@@ -145,11 +150,13 @@
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 100)
+        }, 100);
     }
 
     onMount(() => {
-        const unsubscribe = scrollStore.subscribe(scrollPos => scrollTop = scrollPos);
+        const unsubscribe = scrollStore.subscribe(
+            (scrollPos) => (scrollTop = scrollPos)
+        );
         subscribeToReportEvent();
         loadMoreDivObserver = new IntersectionObserver(
             (entries) => {
@@ -167,7 +174,7 @@
             loadMoreDivObserver.disconnect();
             clearTimeout(loadMoreDivObserverTimeout);
             EventsOff("rcv:llmran");
-        }
+        };
     });
 
     function selectAllFromDate(event: any, date: string) {
@@ -298,7 +305,7 @@
     }
 
     /**
-     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2 
+     * Ask the user if they're sure they want to delete N number of selected screenshots. If they proceed, call deleteSelectedStep2
      */
     async function deleteSelectedStep1() {
         const allScrs = get(rcvRep);
@@ -316,11 +323,12 @@
         try {
             addNewDialog({
                 title: "Confirmation",
-                description: `${selectedIds.length} report${selectedIds.length !== 1 ? 's' : ''} will be deleted. Are you sure you want to proceed?`,
+                description: `${selectedIds.length} report${selectedIds.length !== 1 ? "s" : ""} will be deleted. Are you sure you want to proceed?`,
                 primaryButtonName: "Delete",
-                primaryButtonCallback: async () => await deleteSelectedStep2(selectedIds),
+                primaryButtonCallback: async () =>
+                    await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                // secondaryButtonCallback: () => console.log("Cancelled"),
+                secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);
@@ -334,15 +342,15 @@
     async function deleteSelectedStep2(ids: number[]) {
         try {
             await DeleteReportsById(ids);
-            reportStore.update(prev => {
-                const filtered = prev.filter(r => !ids.includes(r.ReportID))
-                return filtered
-            })
+            reportStore.update((prev) => {
+                const filtered = prev.filter((r) => !ids.includes(r.ReportID));
+                return filtered;
+            });
         } catch (err: any) {
             addNewDialog({
                 title: "Error",
-                description: `Could not delete screenshots with the following error: ${err}`
-            })
+                description: `Could not delete screenshots with the following error: ${err}`,
+            });
         }
     }
 </script>
@@ -351,7 +359,11 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="w-full h-max min-h-screen inline bypass-pad">
     <div class="pb-2 flex flex-col">
-        <div class="top-gradient-bg { titleBackgroundOpacity ? "after:opacity-100" : "after:opacity-0" } pt-10 sticky left-0 top-0 z-30 flex justify-between">
+        <div
+            class="top-gradient-bg {titleBackgroundOpacity
+                ? 'after:opacity-100'
+                : 'after:opacity-0'} pt-10 sticky left-0 top-0 z-30 flex justify-between"
+        >
             <h1
                 class="page-title text-2xl -tracking-wide opacity-85 w-1/2 z-40 pointer-events-none"
             >
@@ -373,7 +385,7 @@
 
                 <div
                     on:click={multiSelectClicked}
-                    class="-tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer bg-white text-black font-semibold rounded-lg"
+                    class="-tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer bg-neutral-200 dark:bg-white text-black font-semibold rounded-lg"
                 >
                     {selecting ? "Cancel" : "Select"}
                 </div>
@@ -393,8 +405,7 @@
                             <Checkbox
                                 id={date}
                                 bind:checked={checkedItems[date]}
-                                on:checked={(e) =>
-                                    selectAllFromDate(e, date)}
+                                on:checked={(e) => selectAllFromDate(e, date)}
                             ></Checkbox>
                         </div>
                     </div>
@@ -405,33 +416,35 @@
                                 on:click={(event) =>
                                     repClicked(date, r.ReportID, event)}
                                 data-intersect
-                                on:intersect={(e) => {r.Visible = e.detail.isIntersecting; animateLoad("r" + r.ReportID); }}
+                                on:intersect={(e) => {
+                                    r.Visible = e.detail.isIntersecting;
+                                    animateLoad("r" + r.ReportID);
+                                }}
                                 class="m-0 p-0 {r.Visible ? '' : 'invisible'}"
                             >
                                 <div
                                     id="r{r.ReportID}"
-                                    class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl"
+                                    class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-100 dark:bg-neutral-800 outline-neutral-300 dark:outline-neutral-900 outline overflow-hidden outline-1 p-1 mr-5 shadow-2xl"
                                 >
                                     {#if selecting}
                                         <div
-                                            class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {r.Selected
-                                                ? 'bg-neutral-500'
-                                                : 'bg-neutral-800'}"
+                                            class="flex items-center justify-center absolute z-30 transition-all opacity-50 left-0 top-0 right-0 bottom-0 {r.Selected
+                                                ? 'bg-neutral-200 dark:bg-neutral-500'
+                                                : 'bg-neutral-400 dark:bg-neutral-800'}"
                                         >
                                             <div
                                                 class="transition-all opacity-0 scale-90 w-[50%] {r.Selected
                                                     ? 'opacity-90 scale-100'
                                                     : ''}"
                                             >
-                                                <Checkmark
-                                                    strokeColor="#fff"
+                                                <Checkmark strokeColor="#fff"
                                                 ></Checkmark>
                                             </div>
                                         </div>
                                     {/if}
 
                                     <div
-                                        class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
+                                        class="group-hover:scale-[99%] group-active:scale-[95%] flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-200 dark:bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
                                     >
                                         <div class="-mt-4">
                                             <MarkdownRenderer
@@ -454,7 +467,8 @@
                 <div></div>
             {/if}
         {:else}
-            No reports yet. Create a report from your screenshots to get started!
+            No reports yet. Create a report from your screenshots to get
+            started!
         {/if}
     </div>
 </div>
@@ -466,7 +480,7 @@
 
     .top-gradient-bg::after {
         display: block;
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: -100px;
@@ -474,6 +488,20 @@
         height: 200px;
         z-index: 1;
         pointer-events: none;
-        background: linear-gradient(180deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+        background: linear-gradient(
+            180deg,
+            rgb(0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
+
+    @media (prefers-color-scheme: light) {
+        .top-gradient-bg::after {
+            background: linear-gradient(
+                180deg,
+                rgb(255, 255, 255) 0%,
+                rgba(255, 255, 255, 0) 100%
+            )
+        }
     }
 </style>

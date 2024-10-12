@@ -34,12 +34,12 @@
         >
             <div
                 on:click={goBack}
-                class="aspect-square flex-shrink h-8 cursor-pointer"
+                class="aspect-square flex-shrink h-8 cursor-pointer fill-neutral-800 dark:fill-white"
             >
-                <BackArrow strokeColor="#fff"></BackArrow>
+                <BackArrow></BackArrow>
             </div>
             <h1
-                class="page-title text-2xl -tracking-wide opacity-85 left-0 top-0 w-1/2 z-20"
+                class="page-title text-2xl -tracking-wide left-0 top-0 w-1/2 z-20"
             >
                 Screenshots
             </h1>
@@ -50,7 +50,7 @@
                     <div class="pb-2 gap-5 flex flex-col pt-2">
                         <div
                             id="s{screenshot.CaptureID}"
-                            class="transition-box-container relative rounded-lg w-fit justify-center items-center bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 shadow-2xl"
+                            class="transition-box-container relative rounded-lg w-fit justify-center items-center bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900 outline outline-1 overflow-hidden p-1 shadow-2xl"
                         >
                             <div
                                 class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-800 opacity-0 hidden"
@@ -68,7 +68,7 @@
                     <div class="flex flex-col justify-end items-end gap-5 mt-4">
                         {#if screenshot.Description !== null}
                             <p
-                                class="max-w-[500px] lg:max-w-[50vw] bg-neutral-800 outline outline-1 outline-neutral-900 rounded-lg p-4 text-justify text-wrap"
+                                class="max-w-[500px] lg:max-w-[50vw] bg-neutral-100 dark:bg-neutral-800 outline outline-1 outline-neutral-200 dark:outline-neutral-900 rounded-lg p-4 text-justify text-wrap"
                             >
                                 {screenshot.Description}
                             </p>

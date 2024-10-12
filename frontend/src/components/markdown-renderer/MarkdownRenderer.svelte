@@ -137,7 +137,7 @@
 
   a {
     text-decoration: underline;
-    text-decoration-color: white;
+    text-decoration-color: inherit;
     cursor: pointer;
     display: inline-block;
     margin: 0px;
@@ -149,5 +149,11 @@
     display: block;
     height: 10px;
     width: 100px;
+  }
+
+  @media (prefers-color-scheme: light) {
+    a {
+      text-decoration-color: inherit;
+    }
   }
 </style>
