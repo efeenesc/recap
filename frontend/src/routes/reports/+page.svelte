@@ -424,7 +424,7 @@
                             >
                                 <div
                                     id="r{r.ReportID}"
-                                    class="group report-div max-h-[200px] flex flex-col cursor-pointer relative rounded-lg w-fit bg-neutral-100 dark:bg-neutral-800 outline-neutral-300 dark:outline-neutral-900 outline overflow-hidden outline-1 p-1 mr-5 shadow-2xl"
+                                    class="group report-div w-full max-h-[200px] flex flex-col cursor-pointer relative rounded-lg bg-neutral-100 dark:bg-neutral-800 outline-neutral-300 dark:outline-neutral-900 outline overflow-hidden outline-1 p-1 mr-5 shadow-2xl"
                                 >
                                     {#if selecting}
                                         <div
