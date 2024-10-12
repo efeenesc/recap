@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - master
+      - golangci-fix
   workflow_dispatch:
   
 permissions:
