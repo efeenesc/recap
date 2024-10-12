@@ -92,7 +92,7 @@
                                     class="flex rounded-md h-[90%] flex-shrink object-contain select-none pointer-events-none"
                                     src={s.Screenshot}
                                 />
-                                <h3 class="flex-shrink-0 pl-2 py-1 self-end">
+                                <h3 class="flex-shrink-0 pl-2 py-1 self-end text-black dark:text-white">
                                     Snapped {s.Date}
                                 </h3>
                             </div>
@@ -122,14 +122,14 @@
                         {#each reports as r (r.ReportID)}
                             <div
                                 id="s{r.ReportID}"
-                                class="max-h-[300px] flex flex-col max-w-[400px] relative rounded-lg w-fit bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 mr-5 shadow-2xl"
+                                class="max-h-[300px] flex flex-col max-w-[400px] relative rounded-lg w-fit bg-neutral-100 dark:bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-300 dark:outline-neutral-900 p-1 mr-5 shadow-2xl"
                             >
                                 <div
                                     on:load|once={() => {
                                         onLoad();
                                         animateLoad("s" + r.ReportID);
                                     }}
-                                    class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-900 transition-all rounded-lg object-contain select-none pointer-events-none"
+                                    class="flex flex-col flex-shrink overflow-hidden p-2 bg-neutral-200 dark:bg-[#161619] transition-all rounded-lg object-contain select-none pointer-events-none"
                                 >
                                     <div class="-mt-4">
                                         <MarkdownRenderer
@@ -137,7 +137,7 @@
                                         ></MarkdownRenderer>
                                     </div>
                                 </div>
-                                <h3 class="flex-shrink-0 pl-2 py-1">
+                                <h3 class="flex-shrink-0 pl-2 py-1 text-black dark:text-white">
                                     Generated {r.Date}
                                 </h3>
                             </div>

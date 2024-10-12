@@ -305,10 +305,21 @@
         right: -100px;
         height: 200px;
         z-index: 1;
+        pointer-events: none;
         background: linear-gradient(
             180deg,
             rgb(0, 0, 0) 0%,
             rgba(0, 0, 0, 0) 100%
         );
+    }
+
+    @media (prefers-color-scheme: light) {
+        .top-gradient-bg::after {
+            background: linear-gradient(
+                180deg,
+                rgb(255, 255, 255) 0%,
+                rgba(255, 255, 255, 0) 100%
+            )
+        }
     }
 </style>

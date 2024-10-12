@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { addNewDialog } from './../../utils/dialog.ts';
     import gsap from "gsap";
     import { onDestroy, onMount } from "svelte";
     import type { DatedScreenshot } from "../../types/ExtendedScreenshot.interface.ts";
@@ -15,7 +16,6 @@
         GenerateReportFromScreenshotIds,
         DeleteScreenshotsById,
     } from "$lib/wailsjs/go/app/AppMethods.js";
-    import { addNewDialog } from "../../utils/dialog.ts";
     import {
         processedScreenshotStore,
         screenshotStore,
@@ -367,7 +367,7 @@
                 primaryButtonCallback: async () =>
                     await deleteSelectedStep2(selectedIds),
                 secondaryButtonName: "Cancel",
-                // secondaryButtonCallback: () => console.log("Cancelled"),
+                secondaryButtonCallback: () => console.log("Cancelled"),
             });
         } catch (err) {
             console.error(err);
@@ -428,7 +428,7 @@
 
                 <div
                     on:click={multiSelectClicked}
-                    class="-tracking-wide transition-all text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-opacity-90 bg-white text-black font-semibold rounded-lg"
+                    class="-tracking-wide transition-all text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-opacity-90 bg-neutral-200 dark:bg-white text-black font-semibold rounded-lg"
                 >
                     {selecting ? "Cancel" : "Select"}
                 </div>
@@ -464,13 +464,13 @@
                             >
                                 <div
                                     id="s{s.CaptureID}"
-                                    class="group cursor-pointer relative rounded-lg bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-900 p-1 shadow-2xl"
+                                    class="group cursor-pointer relative rounded-lg bg-neutral-200 dark:bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-300 dark:outline-neutral-900 p-1 shadow-2xl"
                                 >
                                     {#if selecting}
                                         <div
-                                            class="flex items-center justify-center absolute z-30 transition-all bg-opacity-50 left-0 top-0 right-0 bottom-0 {s.Selected
-                                                ? 'bg-neutral-500'
-                                                : 'bg-neutral-800'}"
+                                            class="flex items-center justify-center absolute z-30 transition-all opacity-50 left-0 top-0 right-0 bottom-0 {s.Selected
+                                                ? 'bg-neutral-200 dark:bg-neutral-500'
+                                                : 'bg-neutral-400 dark:bg-neutral-800'}"
                                         >
                                             <div
                                                 class="transition-all opacity-0 scale-90 w-[50%] {s.Selected
@@ -515,7 +515,7 @@
                                         src={s.Visible ? s.Screenshot : ''}
                                     />
 
-                                    <h3 class="flex-shrink-0 pt-1 pl-2">
+                                    <h3 class="flex-shrink-0 pt-1 pl-2 text-black dark:text-white">
                                         Snapped at {s.Time}
                                     </h3>
                                 </div>
@@ -555,5 +555,15 @@
             rgb(0, 0, 0) 0%,
             rgba(0, 0, 0, 0) 100%
         );
+    }
+
+    @media (prefers-color-scheme: light) {
+        .top-gradient-bg::after {
+            background: linear-gradient(
+                180deg,
+                rgb(255, 255, 255) 0%,
+                rgba(255, 255, 255, 0) 100%
+            )
+        }
     }
 </style>

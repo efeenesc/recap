@@ -127,7 +127,7 @@
                     {#each routes as rg}
                         <div class="flex flex-col gap-2">
                             {#if rg.title}
-                                <div class="px-2 text-sm text-neutral-400">
+                                <div class="px-2 text-sm dark:text-neutral-400">
                                     {rg.title}
                                 </div>
                             {/if}
@@ -137,8 +137,8 @@
                                     on:click={() => routeClicked(r.path)}
                                     class="cursor-pointer px-2 py-2 {currentRoute ===
                                     r.path
-                                        ? 'dark:bg-neutral-100 dark:text-neutral-950 rounded-lg'
-                                        : ''}"
+                                        ? 'fill-neutral-200 stroke-neutral-200 dark:fill-[#666666] dark:stroke-[#666666] bg-neutral-500 text-neutral-100 dark:bg-neutral-100 dark:text-neutral-950 rounded-lg'
+                                        : 'fill-neutral-800 stroke-neutral-800 dark:fill-[#666666] dark:stroke-[#666666] text-neutral-800 dark:text-white'}"
                                 >
                                     <div
                                         class="w-fit h-min flex gap-2 items-center justify-center overflow-hidden relative"
@@ -146,7 +146,6 @@
                                         <div class="sidepanel-icon w-8 h-8">
                                             <svelte:component
                                                 this={r.icon}
-                                                strokeColor="#a3a3a3"
                                             ></svelte:component>
                                         </div>
 
@@ -167,7 +166,7 @@
                 >
                     <div class="mb-2 text-base text-neutral-400">Schedule</div>
                     <div class="flex flex-wrap justify-between gap-2">
-                        <h2 class="text-lg tracking-wide">Screenshots</h2>
+                        <h2 class="text-lg tracking-wide text-black dark:text-white">Screenshots</h2>
 
                         <Toggle
                             checked={scrTimer}
@@ -194,7 +193,7 @@
             <div class="flex flex-col gap-2">
                 {#each routes as rg}
                     <!-- {#if rg.title}
-                        <div class="mb-2 px-2 text-base text-neutral-400">
+                        <div class="mb-2 px-2 text-base dark:text-neutral-400">
                             {rg.title}
                         </div>
                     {/if} -->
@@ -210,10 +209,9 @@
                                 title={r.title}
                                 class="w-fit h-min flex gap-2 items-center justify-center overflow-hidden relative"
                             >
-                                <div class="sidepanel-icon w-8 h-8">
+                                <div class="sidepanel-icon w-8 h-8 fill-[#1f1f1f] dark:fill-[#666666]">
                                     <svelte:component
                                         this={r.icon}
-                                        strokeColor="#666666"
                                     ></svelte:component>
                                 </div>
                             </div>
