@@ -45,7 +45,9 @@ func CreateFolderIfNotExists(path string) {
 	_, err := os.Stat(path)
 	if err != nil {
 		err = os.Mkdir(path, 0700)
-		log.Fatalf("Could not create new folder: %v\n", err.Error())
+		if err != nil {
+			log.Fatalf("Could not create new folder: %v\n", err.Error())
+		}
 	}
 }
 
