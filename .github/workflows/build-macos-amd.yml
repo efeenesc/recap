@@ -1,0 +1,49 @@
+name: Build macOS - AMD64
+on:
+  workflow_call:
+    inputs:
+      upload_url:
+        type: string
+        description: 'URL to upload the release asset'
+        required: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Set build variables
+        id: build_vars
+        run: |
+          echo "platform=darwin/amd64" >> $GITHUB_OUTPUT
+          echo "asset_name=Recap-darwin-amd64.zip" >> $GITHUB_OUTPUT
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.1'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build with Wails
+        run: wails build
+
+      - name: Zip Build Output
+        run: |
+          cd build/bin
+          zip -r ${{ steps.build_vars.outputs.asset_name }} Recap.app
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ inputs.upload_url }}
+          asset_path: ./build/bin/${{ steps.build_vars.outputs.asset_name }}
+          asset_name: ${{ steps.build_vars.outputs.asset_name }}
+          asset_content_type: application/zip

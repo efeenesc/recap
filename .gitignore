@@ -9,4 +9,5 @@ frontend/src/lib/wailsjs
 frontend/build/*
 !frontend/build/.gitkeep
 build/*
+!build/appicon.png
 recap.db

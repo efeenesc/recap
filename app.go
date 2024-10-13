@@ -45,5 +45,5 @@ func addBindings() *app.AppMethods {
 
 func createApp() {
 	methods := addBindings()
-	app.LaunchAppInstance(assets, methods)
+	app.LaunchAppInstance(assets, methods, &iconBytes)
 }

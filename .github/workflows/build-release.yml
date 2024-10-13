@@ -1,77 +1,61 @@
 name: Build and release
 on:
-  push:
-    tags:
-      - 'v*'  # Trigger only when a tag that matches the pattern is pushed
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Ensure necessary permissions for creating releases and uploading assets
+  contents: write
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
   create-release:
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.extract_version.outputs.tag_name }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Extract Tag Name from wails.json
+        id: extract_version
+        run: |
+          TAG_NAME=$(jq -r '.info.productVersion' wails.json)
+          echo "Tag name is: $TAG_NAME"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.extract_version.outputs.tag_name }}
+          release_name: v${{ steps.extract_version.outputs.tag_name }}
           draft: false
           prerelease: false
 
-  build:
+  build-ubuntu:
     needs: create-release
-    if: startsWith(github.ref, 'refs/tags/')
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
+    uses: ./.github/workflows/build-ubuntu.yml
+    with:
+      upload_url: ${{ needs.create-release.outputs.upload_url }}
 
-      - name: Set build variables
-        id: build_vars
-        run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            echo "::set-output name=platform::linux/amd64"
-            echo "::set-output name=asset_name::Recap-linux-amd64"
-          elif [ "${{ matrix.os }}" == "windows-latest" ]; then
-            echo "::set-output name=platform::windows/amd64"
-            echo "::set-output name=asset_name::Recap-windows-amd64.exe"
-          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-            echo "::set-output name=platform::darwin/universal"
-            echo "::set-output name=asset_name::Recap-darwin-universal"
-          fi
-        shell: bash
+  build-windows:
+    needs: create-release
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      upload_url: ${{ needs.create-release.outputs.upload_url }}
 
-      - name: Build wails
-        uses: dAppServer/wails-build-action@v2.2
-        id: build
-        with:
-          build-name: 'Recap'
-          build-platform: ${{ steps.build_vars.outputs.platform }}
-          package: true
-          go-version: '1.20'
+  build-macos-arm:
+    needs: create-release
+    uses: ./.github/workflows/build-macos-arm.yml
+    with:
+      upload_url: ${{ needs.create-release.outputs.upload_url }}
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ steps.build.outputs.build-path }}
-          asset_name: ${{ steps.build_vars.outputs.asset_name }}
-          asset_content_type: application/octet-stream
+  build-macos-amd:
+    needs: create-release
+    uses: ./.github/workflows/build-macos-amd.yml
+    with:
+      upload_url: ${{ needs.create-release.outputs.upload_url }}
