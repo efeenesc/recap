@@ -1,4 +1,4 @@
-name: Build macOS
+name: Build macOS - AMD64
 on:
   workflow_call:
     inputs:
@@ -19,8 +19,8 @@ jobs:
       - name: Set build variables
         id: build_vars
         run: |
-          echo "platform=darwin/arm64" >> $GITHUB_OUTPUT
-          echo "asset_name=Recap-darwin-arm64.zip" >> $GITHUB_OUTPUT
+          echo "platform=darwin/amd64" >> $GITHUB_OUTPUT
+          echo "asset_name=Recap-darwin-amd64.zip" >> $GITHUB_OUTPUT
       
       - name: Set up Go
         uses: actions/setup-go@v4
