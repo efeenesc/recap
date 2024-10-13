@@ -7,7 +7,7 @@ import (
 	"recap/internal/llm"
 	"recap/internal/schedule"
 
-	"github.com/getlantern/systray"
+	"github.com/efeenesc/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
