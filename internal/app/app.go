@@ -9,6 +9,8 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
@@ -62,7 +64,7 @@ func (a *App) onDomReady(ctx context.Context) {
 	WailsContext = &ctx
 }
 
-func LaunchAppInstance(assets embed.FS, methods *AppMethods) {
+func LaunchAppInstance(assets embed.FS, methods *AppMethods, icon *[]byte) {
 	AppInstance := NewApp()
 
 	err := wails.Run(&options.App{
@@ -80,6 +82,19 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods) {
 			WindowIsTranslucent:  true,
 			BackdropType:         windows.Mica,
 			Theme:                windows.SystemDefault,
+		},
+		Linux: &linux.Options{
+			Icon:                *icon,
+			WindowIsTranslucent: true,
+			WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
+			ProgramName:         "Recap",
+		},
+		Mac: &mac.Options{
+			About: &mac.AboutInfo{
+				Title:   "Recap",
+				Message: "efeenesc",
+				Icon:    *icon,
+			},
 		},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
 		OnStartup:        AppInstance.startup,
