@@ -255,7 +255,7 @@ func Initialize() {
 	if err != nil {
 		fmt.Printf("COULD NOT FIND MODEL: %s\nSwitching to Ollama API as a fallback\n", selectedVisionAPI)
 
-		visionAPIFactory, err = models.GetAPI("ollama")
+		visionAPIFactory, err = models.GetAPI("Ollama")
 		if err != nil {
 			log.Fatalf("Could not switch to Ollama fallback!")
 		}
@@ -270,7 +270,7 @@ func Initialize() {
 		if err != nil {
 			fmt.Printf("COULD NOT FIND MODEL: %s\nSwitching to Ollama API as a fallback\n", selectedTextAPI)
 
-			textModelFactory, err = models.GetAPI("ollama")
+			textModelFactory, err = models.GetAPI("Ollama")
 			if err != nil {
 				log.Fatalf("Could not switch to Ollama fallback!")
 			}
