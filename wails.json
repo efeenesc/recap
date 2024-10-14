@@ -17,6 +17,7 @@
     "comments": "Get a Recap of your daily activity. Built using Go and Wails."
   },
   "postBuildHooks": {
-    "windows/*": "cmd.exe /c echo. > ..\/..\/frontend\/build\/.gitkeep"
+    "windows/*": "cmd.exe /c echo. > ..\/..\/frontend\/build\/.gitkeep",
+    "linux/*": "touch ../../frontend/build/.gitkeep"
   }
 }

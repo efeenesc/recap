@@ -5,6 +5,7 @@ import (
 	"embed"
 	"recap/internal/config"
 	"recap/internal/db"
+	"runtime"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -67,6 +68,14 @@ func (a *App) onDomReady(ctx context.Context) {
 func LaunchAppInstance(assets embed.FS, methods *AppMethods, icon *[]byte) {
 	AppInstance := NewApp()
 
+	var bgColor *options.RGBA
+
+	if runtime.GOOS == "linux" {
+		bgColor = &options.RGBA{R: 34, G: 34, B: 34, A: 0}
+	} else {
+		bgColor = &options.RGBA{R: 255, G: 255, B: 255, A: 255}
+	}
+
 	err := wails.Run(&options.App{
 		Title:  "Recap",
 		Width:  1024,
@@ -96,7 +105,7 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods, icon *[]byte) {
 				Icon:    *icon,
 			},
 		},
-		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
+		BackgroundColour: bgColor,
 		OnStartup:        AppInstance.startup,
 		OnDomReady:       AppInstance.onDomReady,
 		Bind: []interface{}{

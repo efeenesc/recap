@@ -79,8 +79,8 @@
                         {#each screenshots as s (s.CaptureID)}
                             <div
                                 id="s{s.CaptureID}"
-                                class="rounded-lg h-[300px] bg-neutral-200 outline-neutral-300 dark:bg-neutral-800 dark:outline-neutral-900
-                                outline w-max overflow-hidden outline-1 p-1 mr-5 shadow-2xl opacity-0 scale-95"
+                                class="rounded-lg h-[300px] bg-neutral-200 border-neutral-300 dark:bg-neutral-800 dark:border-neutral-900
+                                border w-max overflow-hidden p-1 mr-5 shadow-2xl opacity-0 scale-95"
                             >
                                 <img
                                     alt="screenshot"
@@ -122,7 +122,7 @@
                         {#each reports as r (r.ReportID)}
                             <div
                                 id="s{r.ReportID}"
-                                class="max-h-[300px] flex flex-col max-w-[400px] relative rounded-lg w-fit bg-neutral-100 dark:bg-neutral-800 outline overflow-hidden outline-1 outline-neutral-300 dark:outline-neutral-900 p-1 mr-5 shadow-2xl"
+                                class="max-h-[300px] flex flex-col max-w-[400px] relative rounded-lg w-fit bg-neutral-100 dark:bg-neutral-800 border overflow-hidden border-neutral-300 dark:border-neutral-900 p-1 mr-5 shadow-2xl"
                             >
                                 <div
                                     on:load|once={() => {

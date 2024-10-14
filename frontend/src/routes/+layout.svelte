@@ -8,7 +8,6 @@
     import { createLazyIntersect } from "../components/lazy-intersect/LazyIntersect.ts";
     import { ReadInfo, UpdateSettings, UpdateInfo } from "$lib/wailsjs/go/app/AppMethods.js"
     import FirstTimeSetup from "../components/first-time-setup/FirstTimeSetup.svelte";
-    import type { BasicSetting } from "../types/ExtendedSettings.interface.ts";
 
     let bodyFullHeight: number;
     let scrollHeight: number;
@@ -67,11 +66,8 @@
 </script>
 
 <main
-    class="main-container h-screen w-full inter bg-opacity-30 select-none text-[#1f1f1f] dark:text-white"
+    class="main-container h-screen w-full inter select-none text-[#1f1f1f] dark:text-white"
 >
-    <!-- <div style="--wails-draggable:drag" class="z-50 fixed top-0 left-0 w-screen h-[6vh] flex justify-end">
-        <div class="w-[40px] h-[30px] flex items-center justify-center">-</div>
-    </div> -->
     <div class="h-full w-full flex flex-row overflow-hidden pt-2 relative">
         <div class="exclude-sidepanel w-fit h-full grid grid-flow-row">
             <SidePanel></SidePanel>
@@ -81,9 +77,8 @@
         <div
             bind:this={bodyContent}
             bind:clientHeight={bodyInnerHeight}
-            class="scroller w-full h-full rounded-l-lg outline outline-1 bg-opacity-90 outline-neutral-200 dark:outline-neutral-900 px-4 lg:px-6 xl:px-10 overflow-hidden overflow-y-scroll dark:bg-opacity-50 bg-white dark:bg-black"
+            class="scroller w-full h-full rounded-l-lg border border-b-0 border-r-0 bg-opacity-90 border-neutral-200 dark:border-neutral-900 px-4 lg:px-6 xl:px-10 overflow-hidden overflow-y-scroll dark:bg-opacity-50 bg-white dark:bg-black"
         >
-            <!-- <div id="scroll-gradient" class="absolute h-[40%] top-2 left-[25%] right-0 z-20 opacity-0"></div> -->
             <div class="page-container h-max pt-10">
                 <slot></slot>
             </div>
@@ -101,10 +96,6 @@
     @tailwind utilities;
     @tailwind components;
     @tailwind base;
-
-    /* #scroll-gradient {
-        background: linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(255,255,255,0) 100%);
-    } */
 
     .page-container:has(> div.bypass-pad) {
         padding-top: 0px;
