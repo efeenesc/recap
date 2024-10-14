@@ -9,18 +9,25 @@ export const processedReportStore = derived<
     Writable<ExtendedReport[]>,
     DatedReport | undefined
 >(reportStore, ($rep) => {
-    const reports: DatedReport = {}
+    const reports: DatedReport = {};
     if (!$rep || !$rep.length) return;
-    $rep.map((r: ExtendedReport) => {
+
+    $rep.forEach((r: ExtendedReport) => {
         r.Date = formatDate(r.Timestamp);
-        r.ParsedMarkdown = ConvertToHtmlTree(r.Content).content as MdNode[];
-        
-        if (!Object.hasOwn(reports, r.Date)) {
+
+        try {
+            r.ParsedMarkdown = ConvertToHtmlTree(r.Content).content as MdNode[];
+        } catch (err) {
+            console.log(ConvertToHtmlTree(r.Content));
+            console.error(err);
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(reports, r.Date)) {
             reports[r.Date] = [];
         }
 
         reports[r.Date].push(r);
-        return r;
     });
+
     return reports;
 });

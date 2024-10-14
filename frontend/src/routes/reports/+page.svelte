@@ -9,7 +9,7 @@
         getReportsNewerThan,
         getReportsOlderThan,
     } from "../../utils/report.ts";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
     import Checkmark from "../../icons/Checkmark.svelte";
@@ -28,10 +28,11 @@
 
     let selecting: boolean = false;
     const rcvRep = writable<DatedReport | undefined>();
-    let checkedItems: { [key: string]: boolean | undefined } = {};
+    let checkedDate: { [key: string]: boolean | undefined } = {};
     let loadMoreDiv: Element;
     let loadMoreDivObserver: IntersectionObserver;
     let loadMoreDivObserverTimeout: number | undefined;
+    let numberOfCheckedItems: number = 0;
 
     let scrollTop: number = 0;
 
@@ -45,13 +46,13 @@
     $: rcvRep.set(data.data);
 
     $: {
-        if (scrollTop) {
+        if (scrollTop !== undefined) {
             titleBackgroundOpacity = scrollTop > 100 ? true : false;
         }
     }
 
     $: {
-        if (scrollTopSnapshot) {
+        if (scrollTopSnapshot !== undefined) {
             const scroller = document.getElementsByClassName("scroller")[0];
             setTimeout(() => {
                 scroller.scroll(0, scrollTopSnapshot!);
@@ -150,13 +151,14 @@
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 100);
+        }, 100) as unknown as number;
     }
 
     onMount(() => {
         const unsubscribe = scrollStore.subscribe(
             (scrollPos) => (scrollTop = scrollPos)
         );
+
         subscribeToReportEvent();
         loadMoreDivObserver = new IntersectionObserver(
             (entries) => {
@@ -178,18 +180,22 @@
     });
 
     function selectAllFromDate(event: any, date: string) {
-        let checkAll: boolean = checkedItems[date] ? false : true;
-        checkedItems[date] = !checkAll;
+        let checkAll: boolean = checkedDate[date] ? true : false;
+        checkedDate[date] = checkAll;
 
         rcvRep.update((prev) => {
             if (!prev) return prev;
 
+            const updated = prev[date].map((s) => ({
+                ...s,
+                Selected: checkAll,
+            }));
+
+            numberOfCheckedItems += updated.length * (checkAll ? -1 : 1);
+
             return {
                 ...prev,
-                [date]: prev[date].map((s) => ({
-                    ...s,
-                    Selected: !checkAll,
-                })),
+                [date]: updated,
             };
         });
     }
@@ -203,22 +209,24 @@
     });
 
     function repClicked(date: string, reportId: number, event: MouseEvent) {
-        // If 'selecting' is true and a screenshot was clicked, it was selected, not routed to. Early return
+        // If 'selecting' is true and a report was clicked, toggle its selection
         if (selecting) {
             rcvRep.update((prev) => {
                 if (!prev || !prev[date]) return prev;
 
-                const updatedDate = prev[date].map((r) =>
-                    r.ReportID === reportId
-                        ? { ...r, Selected: !r.Selected }
-                        : r
-                );
-
-                // Check if all reports are selected
-                const allSelected = updatedDate.every((rep) => rep.Selected);
+                let allSelected = true;
+                const updatedDate = prev[date].map((r) => {
+                    if (r.ReportID === reportId) {
+                        const newSelected = !r.Selected;
+                        numberOfCheckedItems += newSelected ? 1 : -1; // Increment or decrement checkedLength
+                        return { ...r, Selected: newSelected };
+                    }
+                    allSelected = allSelected && r.Selected; // Check if all reports are selected
+                    return r;
+                });
 
                 // Update the checkedItems state
-                checkedItems[date] = allSelected;
+                checkedDate[date] = allSelected;
 
                 return {
                     ...prev,
@@ -267,6 +275,8 @@
     }
 
     function resetAllSelections() {
+        numberOfCheckedItems = 0;
+
         rcvRep.update((prev) => {
             if (!prev) return prev;
 
@@ -283,8 +293,8 @@
 
             return updatedReports;
         });
-        Object.keys(checkedItems).forEach((key) => {
-            delete checkedItems[key];
+        Object.keys(checkedDate).forEach((key) => {
+            delete checkedDate[key];
         });
     }
 
@@ -346,6 +356,7 @@
                 const filtered = prev.filter((r) => !ids.includes(r.ReportID));
                 return filtered;
             });
+            numberOfCheckedItems -= ids.length;
         } catch (err: any) {
             addNewDialog({
                 title: "Error",
@@ -374,10 +385,11 @@
             >
                 {#if selecting}
                     <div
-                        on:click={deleteSelectedStep1}
-                        class="opacity-0 transition-all delay-200 {selecting
-                            ? 'opacity-100'
-                            : ''} -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer bg-red-400 text-black font-semibold rounded-lg"
+                        on:click={() =>
+                            numberOfCheckedItems ? deleteSelectedStep1() : ""}
+                        class="transition-all {numberOfCheckedItems
+                            ? 'bg-opacity-80 cursor-pointer hover:bg-red-300'
+                            : 'bg-opacity-30 cursor-not-allowed'} -tracking-wide text-xl px-4 p-2 active:scale-[99%] bg-red-400 text-black font-semibold rounded-lg"
                     >
                         Delete
                     </div>
@@ -404,7 +416,7 @@
                         <div class="checkbox opacity-0 pointer-events-none">
                             <Checkbox
                                 id={date}
-                                bind:checked={checkedItems[date]}
+                                bind:checked={checkedDate[date]}
                                 on:checked={(e) => selectAllFromDate(e, date)}
                             ></Checkbox>
                         </div>
@@ -501,7 +513,7 @@
                 180deg,
                 rgb(255, 255, 255) 0%,
                 rgba(255, 255, 255, 0) 100%
-            )
+            );
         }
     }
 </style>

@@ -6,7 +6,7 @@ https://www.svgrepo.com/
 -->
 
 <script lang="ts">
-  export let strokeColor;
+  export let strokeColor: string | undefined = undefined;
   export let title;
 </script>
 

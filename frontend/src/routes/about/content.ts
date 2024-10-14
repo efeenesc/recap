@@ -53,7 +53,7 @@ const appVersion = {
 MarkdownContent: `
 Recap
 
-0.0.1
+0.0.2
 
 efeenesc
 

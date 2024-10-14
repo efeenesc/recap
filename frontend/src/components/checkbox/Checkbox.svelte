@@ -19,10 +19,10 @@
     class="peer hidden" />
     <label
         class="bg-neutral-300 dark:bg-white border block border-neutral-50 rounded-full relative transition-all cursor-pointer w-8 h-8
-        peer-checked:bg-green-600 peer-checked:border-green-600 peer-checked:after:opacity-100 peer-active:scale-95"
+        peer-checked:bg-green-600 peer-checked:border-green-600 peer-checked:after:opacity-100 peer-active:scale-95 stroke-white fill-white"
         for={id}
     >
-        <DoneIcon title="" strokeColor="#fff"></DoneIcon>
+        <DoneIcon title=""></DoneIcon>
     </label>
 </div>
 
