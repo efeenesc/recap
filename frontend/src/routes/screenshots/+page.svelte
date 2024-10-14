@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { addNewDialog } from './../../utils/dialog.ts';
+    import { addNewDialog } from "./../../utils/dialog.ts";
     import gsap from "gsap";
     import { onDestroy, onMount } from "svelte";
     import type { DatedScreenshot } from "../../types/ExtendedScreenshot.interface.ts";
@@ -38,7 +38,8 @@
     let prevId: number | undefined;
     let selecting: boolean = false;
     const rcvScr = writable<DatedScreenshot | undefined>();
-    let checkedItems: { [key: string]: boolean | undefined } = {};
+    let checkedDate: { [key: string]: boolean | undefined } = {};
+    let numberOfCheckedItems: number = 0;
     let isInitialLoad = true;
 
     $: rcvScr.set(data.data);
@@ -67,15 +68,19 @@
     }
 
     async function animateLoad(id: string) {
-        gsap.fromTo("#" + id, {
-            opacity: 0,
-            scale: 0.8,
-        }, {
-            opacity: 1,
-            scale: 1,
-            duration: 1,
-            ease: "expo.out",
-        });
+        gsap.fromTo(
+            "#" + id,
+            {
+                opacity: 0,
+                scale: 0.8,
+            },
+            {
+                opacity: 1,
+                scale: 1,
+                duration: 1,
+                ease: "expo.out",
+            }
+        );
     }
 
     async function addNewScreenshots() {
@@ -145,7 +150,6 @@
         }
     }
 
-
     onMount(() => {
         const unsubscribe = scrollStore.subscribe(
             (scrollPos) => (scrollTop = scrollPos)
@@ -188,18 +192,22 @@
     }
 
     function selectAllFromDate(event: any, date: string) {
-        let checkAll: boolean = checkedItems[date] ? false : true;
-        checkedItems[date] = !checkAll;
+        let checkAll: boolean = checkedDate[date] ? true : false;
+        checkedDate[date] = checkAll;
 
         rcvScr.update((prev) => {
             if (!prev) return prev;
 
+            const updated = prev[date].map((s) => ({
+                ...s,
+                Selected: checkAll,
+            }));
+
+            numberOfCheckedItems += updated.length * (checkAll ? -1 : 1);
+
             return {
                 ...prev,
-                [date]: prev[date].map((s) => ({
-                    ...s,
-                    Selected: !checkAll,
-                })),
+                [date]: updated,
             };
         });
     }
@@ -223,22 +231,24 @@
     };
 
     function scrClicked(date: string, captureId: number, event: MouseEvent) {
-        // If 'selecting' is true and a screenshot was clicked, it was selected, not routed to. Early return
+        // If 'selecting' is true, toggle screenshot selection and update state
         if (selecting) {
             rcvScr.update((prev) => {
                 if (!prev || !prev[date]) return prev;
 
-                const updatedDate = prev[date].map((s) =>
-                    s.CaptureID === captureId
-                        ? { ...s, Selected: !s.Selected }
-                        : s
-                );
-
-                // Check if all screenshots are selected
-                const allSelected = updatedDate.every((scr) => scr.Selected);
+                let allSelected = true;
+                const updatedDate = prev[date].map((s) => {
+                    if (s.CaptureID === captureId) {
+                        const newSelected = !s.Selected;
+                        numberOfCheckedItems += newSelected ? 1 : -1; // Increment or decrement checkedLength
+                        return { ...s, Selected: newSelected };
+                    }
+                    allSelected = allSelected && s.Selected; // Check if all screenshots are selected
+                    return s;
+                });
 
                 // Update the checkedItems state
-                checkedItems[date] = allSelected;
+                checkedDate[date] = allSelected;
 
                 return {
                     ...prev,
@@ -273,6 +283,8 @@
     }
 
     function resetAllSelections() {
+        numberOfCheckedItems = 0;
+
         rcvScr.update((prev) => {
             if (!prev) return prev;
 
@@ -289,8 +301,8 @@
 
             return updatedScreenshots;
         });
-        Object.keys(checkedItems).forEach((key) => {
-            delete checkedItems[key];
+        Object.keys(checkedDate).forEach((key) => {
+            delete checkedDate[key];
         });
     }
 
@@ -385,6 +397,7 @@
                 const filtered = prev.filter((r) => !ids.includes(r.CaptureID));
                 return filtered;
             });
+            numberOfCheckedItems -= ids.length;
         } catch (err: any) {
             addNewDialog({
                 title: "Error",
@@ -413,14 +426,20 @@
             >
                 {#if selecting}
                     <div
-                        on:click={generateReport}
-                        class="transition-all -tracking-wide text-xl px-4 p-2 bg-opacity-80 hover:bg-blue-300 active:scale-[99%] cursor-pointer bg-blue-400 text-black font-semibold rounded-lg"
+                        on:click={() =>
+                            numberOfCheckedItems ? generateReport() : ""}
+                        class="transition-all {numberOfCheckedItems
+                            ? 'bg-opacity-80 cursor-pointer hover:bg-blue-300'
+                            : 'bg-opacity-30 cursor-not-allowed'} -tracking-wide text-xl px-4 p-2 active:scale-[99%] bg-blue-400 text-black font-semibold rounded-lg"
                     >
                         Report
                     </div>
                     <div
-                        on:click={deleteSelectedStep1}
-                        class="transition-all -tracking-wide text-xl px-4 p-2 bg-opacity-80 cursor-pointer active:scale-[99%] hover:bg-red-300 bg-red-400 text-black font-semibold rounded-lg"
+                        on:click={() =>
+                            numberOfCheckedItems ? deleteSelectedStep1() : ""}
+                        class="transition-all {numberOfCheckedItems
+                            ? 'bg-opacity-80 cursor-pointer hover:bg-red-300'
+                            : 'bg-opacity-30 cursor-not-allowed'} -tracking-wide text-xl px-4 p-2 active:scale-[99%] bg-red-400 text-black font-semibold rounded-lg"
                     >
                         Delete
                     </div>
@@ -447,7 +466,7 @@
                         <div class="checkbox opacity-0 pointer-events-none">
                             <Checkbox
                                 id={date}
-                                bind:checked={checkedItems[date]}
+                                bind:checked={checkedDate[date]}
                                 on:checked={(e) => selectAllFromDate(e, date)}
                             ></Checkbox>
                         </div>
@@ -459,8 +478,12 @@
                                 on:click={(event) =>
                                     scrClicked(date, s.CaptureID, event)}
                                 data-intersect
-                                on:intersect={(e) => {s.Visible = e.detail.isIntersecting}}
-                                class="m-0 p-0 {s.Visible ? '' : 'invisible'} aspect-video"
+                                on:intersect={(e) => {
+                                    s.Visible = e.detail.isIntersecting;
+                                }}
+                                class="m-0 p-0 {s.Visible
+                                    ? ''
+                                    : 'invisible'} aspect-video"
                             >
                                 <div
                                     id="s{s.CaptureID}"
@@ -512,10 +535,12 @@
                                             animateLoad("s" + s.CaptureID)}
                                         class="group-hover:scale-[99%] group-active:scale-[95%] transition-all flex rounded-md object-contain select-none pointer-events-none"
                                         loading="lazy"
-                                        src={s.Visible ? s.Screenshot : ''}
+                                        src={s.Visible ? s.Screenshot : ""}
                                     />
 
-                                    <h3 class="flex-shrink-0 pt-1 pl-2 text-black dark:text-white">
+                                    <h3
+                                        class="flex-shrink-0 pt-1 pl-2 text-black dark:text-white"
+                                    >
                                         Snapped at {s.Time}
                                     </h3>
                                 </div>
@@ -530,7 +555,8 @@
                 <div></div>
             {/if}
         {:else}
-            No screenshots available yet. Turn on the screenshot schedule to get started!
+            No screenshots available yet. Turn on the screenshot schedule to get
+            started!
         {/if}
     </div>
 </div>
@@ -563,7 +589,7 @@
                 180deg,
                 rgb(255, 255, 255) 0%,
                 rgba(255, 255, 255, 0) 100%
-            )
+            );
         }
     }
 </style>
