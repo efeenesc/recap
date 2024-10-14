@@ -4,10 +4,7 @@ https://github.com/grommet/grommet-icons?ref=svgrepo.com
 in Apache License via SVG Repo
 https://www.svgrepo.com/
 -->
-<script lang="ts">
-  export let strokeColor;
-</script>
 
-<svg style="margin: 0% auto; stroke: {strokeColor}; align-self: stretch" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<svg style="margin: 0% auto; align-self: stretch" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
   <path fill="none" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
 </svg>
