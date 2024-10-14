@@ -31,11 +31,11 @@
     let titleBackgroundOpacity: boolean = false;
 
     $: {
-        if (scrollTop) {
+        if (scrollTop !== undefined) {
             titleBackgroundOpacity = scrollTop > 100 ? true : false;
         }
     }
-
+    
     async function getData(): Promise<CategorizedSettings | undefined> {
         let items = undefined;
         try {
@@ -271,13 +271,13 @@
                                         <div
                                             on:click={() =>
                                                 revertChanges(cat, set)}
-                                            class="cursor-pointer inline flex-shrink transition-all p-1 w-8 h-8 aspect-square rounded-full bg-gray-200 {changedSettings[
+                                            class="cursor-pointer stroke-[#2966eb] fill-[#2966eb] inline flex-shrink transition-all p-1 w-8 h-8 aspect-square rounded-full bg-gray-200 {changedSettings[
                                                 set
                                             ] !== undefined
                                                 ? 'opacity-100 scale-100'
                                                 : 'opacity-0 scale-[95%]'}"
                                         >
-                                            <RevertIcon strokeColor="#2966eb"
+                                            <RevertIcon
                                             ></RevertIcon>
                                         </div>
                                     </div>

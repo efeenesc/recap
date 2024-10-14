@@ -3,6 +3,8 @@ import { get } from 'svelte/store';
 import type { ExtendedReport } from "../../../types/ExtendedReport.interface.ts";
 import { getReportById } from "../../../utils/report.ts";
 import { reportStore } from "$lib/stores/ReportStore.ts";
+import { ConvertToHtmlTree } from "$lib/markdown/Markdown.ts";
+import type { MdNode } from "$lib/markdown/Markdown.interface.ts";
 
 // Pulls report from database
 async function pullFromDb(id: number): Promise<ExtendedReport | null> {
@@ -43,6 +45,9 @@ export const load = async ({ params }) => {
         if (!result) {
           reject(error(404, 'Report not found'));
         } else {
+          if (!result.ParsedMarkdown) {
+            result.ParsedMarkdown = ConvertToHtmlTree(result.Content).content as MdNode[];
+          } 
           resolve(result);
         }
       })

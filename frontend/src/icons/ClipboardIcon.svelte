@@ -5,12 +5,8 @@ in CC Attribution License via SVG Repo
 https://www.svgrepo.com/
 -->
 
-<script lang="ts">
-    export let strokeColor;
-</script>
-
 <svg
-    style="width: 100%; height: fit; margin: 0% auto; stroke: {strokeColor}"
+    style="width: 100%; height: fit; margin: 0% auto;"
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

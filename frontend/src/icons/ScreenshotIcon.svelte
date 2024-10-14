@@ -5,12 +5,9 @@ in MIT License via SVG Repo
 https://www.svgrepo.com/
 -->
 
-<script lang="ts">
-    export let strokeColor;
-</script>
 
 <svg
-    style="width: 100%; margin: 0% auto; stroke: {strokeColor}; fill: {strokeColor}"
+    style="width: 100%; margin: 0% auto;"
     viewBox="0 0 24 24"
     version="1.1"
 >

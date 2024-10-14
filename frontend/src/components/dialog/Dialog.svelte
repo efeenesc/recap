@@ -2,7 +2,7 @@
 	import { fade, scale } from 'svelte/transition';
     import { expoOut } from 'svelte/easing';
     import { dialogStore, type DialogData } from "$lib/stores/DialogStore.ts";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import type { Unsubscriber } from "svelte/store";
     import { removeFirstDialog } from "../../utils/dialog.ts";
 
@@ -10,10 +10,9 @@
     export { _class as class };
     let dialogs: DialogData[] = [];
     let currentDialog: DialogData | undefined;
-    let dialogUnsubscriber: Unsubscriber;
 
-    function subscribeToDialog(): void {
-        dialogUnsubscriber = dialogStore.subscribe((data) => {
+    function subscribeToDialog(): Unsubscriber {
+        return dialogStore.subscribe((data) => {
             dialogs = data;
 
             if (dialogs && dialogs.length > 0) {
@@ -56,14 +55,12 @@
         removeFirstDialog();
     }
 
-    onDestroy(() => {
-        if (dialogUnsubscriber) {
-            dialogUnsubscriber();
-        }
-    });
-
     onMount(() => {
-        subscribeToDialog();
+        const unsubscriber = subscribeToDialog();
+
+        return () => {
+            unsubscriber();
+        }
     });
 </script>
 

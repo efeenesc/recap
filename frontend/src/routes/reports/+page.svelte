@@ -9,7 +9,7 @@
         getReportsNewerThan,
         getReportsOlderThan,
     } from "../../utils/report.ts";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
     import Checkmark from "../../icons/Checkmark.svelte";
@@ -46,13 +46,13 @@
     $: rcvRep.set(data.data);
 
     $: {
-        if (scrollTop) {
+        if (scrollTop !== undefined) {
             titleBackgroundOpacity = scrollTop > 100 ? true : false;
         }
     }
 
     $: {
-        if (scrollTopSnapshot) {
+        if (scrollTopSnapshot !== undefined) {
             const scroller = document.getElementsByClassName("scroller")[0];
             setTimeout(() => {
                 scroller.scroll(0, scrollTopSnapshot!);
@@ -151,13 +151,14 @@
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 100);
+        }, 100) as unknown as number;
     }
 
     onMount(() => {
         const unsubscribe = scrollStore.subscribe(
             (scrollPos) => (scrollTop = scrollPos)
         );
+
         subscribeToReportEvent();
         loadMoreDivObserver = new IntersectionObserver(
             (entries) => {
