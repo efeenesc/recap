@@ -9,7 +9,7 @@
         getReportsNewerThan,
         getReportsOlderThan,
     } from "../../utils/report.ts";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
     import Checkmark from "../../icons/Checkmark.svelte";
@@ -150,7 +150,7 @@
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 100);
+        }, 100) as unknown as number;
     }
 
     onMount(() => {

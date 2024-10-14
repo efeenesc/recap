@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { addNewDialog } from './../../utils/dialog.ts';
     import gsap from "gsap";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import type { DatedScreenshot } from "../../types/ExtendedScreenshot.interface.ts";
     import { goto, afterNavigate, beforeNavigate } from "$app/navigation";
     import Checkbox from "../../components/checkbox/Checkbox.svelte";
@@ -184,7 +184,7 @@
     $: if (loadMoreDiv) {
         loadMoreDivObserverTimeout = setTimeout(() => {
             loadMoreDivObserver.observe(loadMoreDiv);
-        }, 100);
+        }, 100) as unknown as number;;
     }
 
     function selectAllFromDate(event: any, date: string) {

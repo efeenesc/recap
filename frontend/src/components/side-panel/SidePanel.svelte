@@ -1,6 +1,6 @@
 <script lang="ts">
     import InfoIcon from "./../../icons/InfoIcon.svelte";
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import ClipboardIcon from "../../icons/ClipboardIcon.svelte";
     import ScreenshotIcon from "../../icons/ScreenshotIcon.svelte";
     import SettingsIcon from "../../icons/SettingsIcon.svelte";
