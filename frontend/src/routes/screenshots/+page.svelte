@@ -52,13 +52,13 @@
     let allScreenshotsLoaded: boolean = false;
 
     $: {
-        if (scrollTop) {
+        if (scrollTop !== undefined) {
             titleBackgroundOpacity = scrollTop > 100 ? true : false;
         }
     }
 
     $: {
-        if (scrollTopSnapshot) {
+        if (scrollTopSnapshot !== undefined) {
             const scroller = document.getElementsByClassName("scroller")[0];
             setTimeout(() => {
                 scroller.scroll(0, scrollTopSnapshot!);

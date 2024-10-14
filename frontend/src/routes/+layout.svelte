@@ -1,7 +1,7 @@
 <script lang="ts">
     import VirtualScrollbar from "./../components/virtual-scrollbar/VirtualScrollbar.svelte";
     import SidePanel from "./../components/side-panel/SidePanel.svelte";
-    import { onNavigate } from "$app/navigation";
+    import { beforeNavigate, onNavigate } from "$app/navigation";
     import { onMount } from "svelte";
     import Dialog from "../components/dialog/Dialog.svelte";
     import { updateScroll } from "$lib/stores/ScrollStore.ts";
@@ -40,21 +40,25 @@
         checkFirstTimeSetup();
 
         return () => {
+            bodyContent.removeEventListener("scroll", (ev) => {});
             mutationObserver.disconnect();
             intersectionObserver.disconnect();
         }
     });
 
+    beforeNavigate((navigation) => {
+        if (navigation.from!.route.id === navigation.to!.route.id) {
+            navigation.cancel();
+        }
+    })
+
     onNavigate((navigation) => {
         if (!document.startViewTransition) return;
-
-        updateScroll(0);
 
         return new Promise((resolve) => {
             document.startViewTransition(async () => {
                 
                 resolve();
-                await navigation.complete;
             });
         });
     });
