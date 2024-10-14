@@ -13,8 +13,9 @@
     "email": "hello@efeenescamci.com"
   },
   "info": {
-    "productVersion": "0.0.1",
-    "comments": "Get a Recap of your daily activity. Built using Go and Wails."
+    "productVersion": "0.0.2",
+    "comments": "Get a Recap of your daily activity. Built using Go and Wails.",
+    "copyright": "efeenesc"
   },
   "postBuildHooks": {
     "windows/*": "cmd.exe /c echo. > ..\/..\/frontend\/build\/.gitkeep",
