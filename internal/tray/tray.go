@@ -22,6 +22,9 @@ func onReady() {
 	systray.SetTooltip("Open Recap")
 
 	systray.SetIcon(*iconBytes)
+	systray.AddIconClickAction(func() {
+		runtime.Show(*app.WailsContext)
+	})
 
 	scrScheduleEnabled := config.Config.ScreenshotIntervalEnabled == 1
 	llmScheduleEnabled := config.Config.DescGenIntervalEnabled == 1
