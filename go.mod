@@ -3,7 +3,7 @@ module recap
 go 1.23.1
 
 require (
-	github.com/efeenesc/systray v0.0.0-20241013144251-4695385db35d
+	github.com/efeenesc/systray v0.0.1
 	github.com/google/generative-ai-go v0.18.0
 	github.com/kbinani/screenshot v0.0.0-20240820160931-a8a2c5d0e191
 	github.com/mattn/go-sqlite3 v1.14.23

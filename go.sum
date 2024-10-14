@@ -22,8 +22,8 @@ github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGX
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/efeenesc/systray v0.0.0-20241013144251-4695385db35d h1:b61XyiWlBlhWBLKGGZlsOmFIYNnP0KXya9APjbkMMIo=
-github.com/efeenesc/systray v0.0.0-20241013144251-4695385db35d/go.mod h1:udsc4IAOHZYPpefpwVW3F6vBl5gF7RvEi19bxcgGjNY=
+github.com/efeenesc/systray v0.0.1 h1:OOEzIkGcp71ry+LlC7rmCUMGRh+s6foPvUHo+bf1y+U=
+github.com/efeenesc/systray v0.0.1/go.mod h1:udsc4IAOHZYPpefpwVW3F6vBl5gF7RvEi19bxcgGjNY=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
