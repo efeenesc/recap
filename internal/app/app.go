@@ -23,7 +23,6 @@ type App struct {
 }
 
 type AppMethods struct {
-	FunctionsGiven               bool
 	CSetScrTimer                 func(bool)
 	CSetLLMTimer                 func(bool)
 	CCheckTimers                 func() (bool, bool)

@@ -38,8 +38,6 @@ func addBindings() *app.AppMethods {
 	methods.CWriteInfo = db.WriteInfo
 	methods.CReadInfo = db.ReadInfo
 	methods.CReadAllInfo = db.ReadAllInfo
-
-	methods.FunctionsGiven = true
 	return methods
 }
 

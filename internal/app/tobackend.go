@@ -14,19 +14,19 @@ type TimerState struct {
 }
 
 func (a *AppMethods) EmitStartStopScrTimer(state bool) {
-	if a.FunctionsGiven {
+	if a.CSetScrTimer != nil {
 		a.CSetScrTimer(state)
 	}
 }
 
 func (a *AppMethods) EmitStartStopLLMTimer(state bool) {
-	if a.FunctionsGiven {
+	if a.CSetLLMTimer != nil {
 		a.CSetLLMTimer(state)
 	}
 }
 
 func (a *AppMethods) CheckTimers() *TimerState {
-	if a.FunctionsGiven {
+	if a.CCheckTimers != nil {
 		scr, llm := a.CCheckTimers()
 		tmr := &TimerState{
 			Scr: scr,
@@ -40,7 +40,7 @@ func (a *AppMethods) CheckTimers() *TimerState {
 }
 
 func (a *AppMethods) GetScreenshots(limit int) []db.CaptureScreenshotImage {
-	if a.FunctionsGiven {
+	if a.CGetScreenshots != nil {
 		results, err := a.CGetScreenshots(limit)
 		if err != nil {
 			fmt.Println(err)
@@ -54,7 +54,7 @@ func (a *AppMethods) GetScreenshots(limit int) []db.CaptureScreenshotImage {
 }
 
 func (a *AppMethods) GetScreenshotsOlderThan(id int, limit int) ([]db.CaptureScreenshotImage, error) {
-	if a.FunctionsGiven {
+	if a.CGetScreenshotsOlderThan != nil {
 		results, err := a.CGetScreenshotsOlderThan(id, limit)
 		if err != nil {
 			fmt.Printf("Received error from GetScreenshotsOlderThan: %v\n", err)
@@ -64,11 +64,11 @@ func (a *AppMethods) GetScreenshotsOlderThan(id int, limit int) ([]db.CaptureScr
 		return results, nil
 	}
 
-	return []db.CaptureScreenshotImage{}, fmt.Errorf("Callback functions were not passed to AppMethods\n")
+	return []db.CaptureScreenshotImage{}, fmt.Errorf("callback functions were not passed to AppMethods")
 }
 
 func (a *AppMethods) GetScreenshotsNewerThan(id int) ([]db.CaptureScreenshotImage, error) {
-	if a.FunctionsGiven {
+	if a.CGetScreenshotsNewerThan != nil {
 		results, err := a.CGetScreenshotsNewerThan(id)
 		if err != nil {
 			fmt.Printf("Received error from GetScreenshotsNewerThan: %v\n", err)
@@ -78,11 +78,11 @@ func (a *AppMethods) GetScreenshotsNewerThan(id int) ([]db.CaptureScreenshotImag
 		return results, nil
 	}
 
-	return []db.CaptureScreenshotImage{}, fmt.Errorf("Callback functions were not passed to AppMethods\n")
+	return []db.CaptureScreenshotImage{}, fmt.Errorf("callback functions were not passed to AppMethods")
 }
 
 func (a *AppMethods) GetReports(limit int) []db.Report {
-	if a.FunctionsGiven {
+	if a.CGetReports != nil {
 		results, err := a.CGetReports(limit)
 		if err != nil {
 			fmt.Println(err)
@@ -96,7 +96,7 @@ func (a *AppMethods) GetReports(limit int) []db.Report {
 }
 
 func (a *AppMethods) GetReportById(id int) *db.Report {
-	if a.FunctionsGiven {
+	if a.CGetReportById != nil {
 		result, err := a.CGetReportById(id)
 		if err != nil {
 			fmt.Println(err)
@@ -110,7 +110,7 @@ func (a *AppMethods) GetReportById(id int) *db.Report {
 }
 
 func (a *AppMethods) GetReportsNewerThan(id int) []db.Report {
-	if a.FunctionsGiven {
+	if a.CGetReportsNewerThan != nil {
 		result, err := a.CGetReportsNewerThan(id)
 		if err != nil {
 			fmt.Println(err)
@@ -124,7 +124,7 @@ func (a *AppMethods) GetReportsNewerThan(id int) []db.Report {
 }
 
 func (a *AppMethods) GetReportsOlderThan(id int, limit int) []db.Report {
-	if a.FunctionsGiven {
+	if a.CGetReportsOlderThan != nil {
 		result, err := a.CGetReportsOlderThan(id, limit)
 		if err != nil {
 			fmt.Println(err)
@@ -138,7 +138,7 @@ func (a *AppMethods) GetReportsOlderThan(id int, limit int) []db.Report {
 }
 
 func (a *AppMethods) GetScreenshotById(id int) *db.CaptureScreenshotImage {
-	if a.FunctionsGiven {
+	if a.CGetScreenshotById != nil {
 		result, err := a.CGetScreenshotById(id)
 		if err != nil {
 			fmt.Println(err)
@@ -152,7 +152,7 @@ func (a *AppMethods) GetScreenshotById(id int) *db.CaptureScreenshotImage {
 }
 
 func (a *AppMethods) DeleteScreenshotsById(ids []int) error {
-	if a.FunctionsGiven {
+	if a.CDeleteScreenshotsById != nil {
 		err := a.CDeleteScreenshotsById(ids)
 		if err != nil {
 			fmt.Println(err)
@@ -162,11 +162,11 @@ func (a *AppMethods) DeleteScreenshotsById(ids []int) error {
 		return nil
 	}
 
-	return fmt.Errorf("Callback functions not passed")
+	return fmt.Errorf("callback functions not passed")
 }
 
 func (a *AppMethods) DeleteReportsById(ids []int) error {
-	if a.FunctionsGiven {
+	if a.CDeleteReportsById != nil {
 		err := a.CDeleteReportsById(ids)
 		if err != nil {
 			fmt.Println(err)
@@ -176,11 +176,11 @@ func (a *AppMethods) DeleteReportsById(ids []int) error {
 		return nil
 	}
 
-	return fmt.Errorf("Callback functions not passed")
+	return fmt.Errorf("callback functions not passed")
 }
 
 func (a *AppMethods) GenerateReportFromScreenshotIds(ids []int) (*int64, error) {
-	if a.FunctionsGiven {
+	if a.CGenerateReportWithSelectScr != nil {
 		result, err := a.CGenerateReportWithSelectScr(ids)
 		if err != nil {
 			fmt.Println(err)
@@ -194,7 +194,7 @@ func (a *AppMethods) GenerateReportFromScreenshotIds(ids []int) (*int64, error) 
 }
 
 func (a *AppMethods) GetConfig() *config.AppConfig {
-	if a.FunctionsGiven {
+	if a.CGetConfig != nil {
 		result, err := a.CGetConfig()
 		if err != nil {
 			fmt.Println(err)
@@ -208,7 +208,7 @@ func (a *AppMethods) GetConfig() *config.AppConfig {
 }
 
 func (a *AppMethods) GetDisplayValues() map[string]db.SettingDisplayProps {
-	if a.FunctionsGiven {
+	if a.CGetDisplayValues != nil {
 		result := a.CGetDisplayValues()
 		return result
 	}
@@ -229,7 +229,7 @@ func (a *AppMethods) SelectFolder() (*string, error) {
 }
 
 func (a *AppMethods) UpdateSettings(newSettings map[string]string) error {
-	if a.FunctionsGiven {
+	if a.CUpdateSettings != nil {
 		err := a.CUpdateSettings(newSettings)
 		if err != nil {
 			return err
@@ -238,11 +238,11 @@ func (a *AppMethods) UpdateSettings(newSettings map[string]string) error {
 		return nil
 	}
 
-	return fmt.Errorf("Missing function when calling UpdateSettings\n")
+	return fmt.Errorf("missing function UpdateSettings")
 }
 
 func (a *AppMethods) UpdateInfo(newInfo map[string]string) error {
-	if a.FunctionsGiven {
+	if a.CUpdateInfo != nil {
 		err := a.CUpdateInfo(newInfo)
 		if err != nil {
 			return err
@@ -251,11 +251,11 @@ func (a *AppMethods) UpdateInfo(newInfo map[string]string) error {
 		return nil
 	}
 
-	return fmt.Errorf("Missing function when calling UpdateInfo\n")
+	return fmt.Errorf("missing function UpdateInfo")
 }
 
 func (a *AppMethods) WriteInfo(key, value string) error {
-	if a.FunctionsGiven {
+	if a.CWriteInfo != nil {
 		err := a.CWriteInfo(key, value)
 		if err != nil {
 			return err
@@ -264,11 +264,11 @@ func (a *AppMethods) WriteInfo(key, value string) error {
 		return nil
 	}
 
-	return fmt.Errorf("Missing function when calling WriteInfo\n")
+	return fmt.Errorf("missing function WriteInfo")
 }
 
 func (a *AppMethods) ReadInfo(key string) (*db.Info, error) {
-	if a.FunctionsGiven {
+	if a.CReadInfo != nil {
 		val, err := a.CReadInfo(key)
 		if err != nil {
 			return nil, err
@@ -277,11 +277,11 @@ func (a *AppMethods) ReadInfo(key string) (*db.Info, error) {
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("Missing function when calling WriteInfo\n")
+	return nil, fmt.Errorf("missing function WriteInfo")
 }
 
 func (a *AppMethods) ReadAllInfo() (map[string]string, error) {
-	if a.FunctionsGiven {
+	if a.CReadAllInfo != nil {
 		val, err := a.CReadAllInfo()
 		if err != nil {
 			return nil, err
@@ -290,5 +290,5 @@ func (a *AppMethods) ReadAllInfo() (map[string]string, error) {
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("Missing function when calling WriteInfo\n")
+	return nil, fmt.Errorf("missing function WriteInfo")
 }

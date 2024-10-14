@@ -398,7 +398,7 @@ func GetScreenshots(limit int) ([]CaptureScreenshotImage, error) {
 func GetScreenshotById(id int) (*CaptureScreenshotImage, error) {
 	dbCl, err := CreateConnection()
 	if err != nil {
-		return nil, fmt.Errorf("Could not connect to DB: %v", err)
+		return nil, fmt.Errorf("could not connect to DB: %v", err)
 	}
 	defer dbCl.Close()
 
