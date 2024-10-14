@@ -71,7 +71,7 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods, icon *[]byte) {
 	var bgColor *options.RGBA
 
 	if runtime.GOOS == "linux" {
-		bgColor = &options.RGBA{R: 34, G: 34, B: 34, A: 0}
+		bgColor = &options.RGBA{R: 34, G: 34, B: 34, A: 255}
 	} else {
 		bgColor = &options.RGBA{R: 255, G: 255, B: 255, A: 255}
 	}
@@ -93,10 +93,9 @@ func LaunchAppInstance(assets embed.FS, methods *AppMethods, icon *[]byte) {
 			Theme:                windows.SystemDefault,
 		},
 		Linux: &linux.Options{
-			Icon:                *icon,
-			WindowIsTranslucent: true,
-			WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
-			ProgramName:         "Recap",
+			Icon:             *icon,
+			WebviewGpuPolicy: linux.WebviewGpuPolicyAlways,
+			ProgramName:      "Recap",
 		},
 		Mac: &mac.Options{
 			About: &mac.AboutInfo{
