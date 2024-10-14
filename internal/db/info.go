@@ -16,7 +16,7 @@ type Info struct {
 }
 
 var defaultInfo = map[string]string{
-	"Version":                "0.0.1",
+	"Version":                "0.0.2",
 	"FirstTimeTutorialShown": "0",
 }
 
@@ -161,6 +161,7 @@ func ReadAllInfo() (map[string]string, error) {
 // It starts a new transaction, inserts the default key-value pairs into the info table,
 // and commits the transaction. If any error occurs during the process, the transaction
 // is rolled back and an error is returned.
+// If
 func InitializeInfo(dbCl *sql.DB) error {
 	tx, err := dbCl.BeginTx(context.Background(), &sql.TxOptions{})
 	if err != nil {
@@ -168,12 +169,25 @@ func InitializeInfo(dbCl *sql.DB) error {
 	}
 
 	for k, v := range defaultInfo {
-		if _, err := tx.Exec("INSERT INTO info (key, value) VALUES (?, ?)", k, v); err != nil {
+		_, err := tx.Exec("INSERT INTO info (key, value) VALUES (?, ?)", k, v)
+		if err != nil {
+			// Rollback the transaction if the INSERT fails
 			tx.Rollback() // nolint: all
-			return fmt.Errorf("error inserting info (%s, %s): %v", k, v, err)
+
+			// Check if the failed key is "Version" and attempt to update it
+			if k == "Version" {
+				updateData := map[string]string{"Version": v}
+				if updateErr := UpdateInfo(updateData); updateErr != nil {
+					return fmt.Errorf("error updating info after failed insert (%s): %v", k, updateErr)
+				}
+			} else {
+				// If the error is not related to the "Version" key, return the error
+				return fmt.Errorf("error inserting info (%s, %s): %v", k, v, err)
+			}
 		}
 	}
 
+	// Commit the transaction if all INSERTs were successful
 	if err := tx.Commit(); err != nil {
 		tx.Rollback() // nolint: all
 		return fmt.Errorf("error committing transaction: %v", err)
